@@ -1,6 +1,6 @@
 package com.simplecoding.evcharge.charger.entity;
 
-import com.practice.practice.station.entity.Station;
+import com.simplecoding.evcharge.station.entity.Station;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

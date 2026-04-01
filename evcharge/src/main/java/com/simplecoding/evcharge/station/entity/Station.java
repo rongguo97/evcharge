@@ -1,6 +1,6 @@
 package com.simplecoding.evcharge.station.entity;
 
-import com.practice.practice.charger.entity.Charger;
+import com.simplecoding.evcharge.charger.entity.Charger;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +15,11 @@ import java.util.List;
 @Setter
 public class Station {
 
-    @Id
+    @
+
+
+
+            Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long stationId; // 충전소 고유 번호 (PK)
 
