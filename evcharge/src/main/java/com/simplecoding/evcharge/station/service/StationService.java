@@ -1,5 +1,6 @@
 package com.simplecoding.evcharge.station.service;
 
+import com.simplecoding.evcharge.common.CommonUtil;
 import com.simplecoding.evcharge.common.MapStruct;
 import com.simplecoding.evcharge.station.dto.StationDto;
 import com.simplecoding.evcharge.station.entity.Station;
@@ -18,6 +19,7 @@ public class StationService {
 
     private final StationRepository stationRepository;
     private final MapStruct mapStruct;
+    private final CommonUtil util;
 
     /**
      * 1. 충전소 목록 조회 (검색 및 페이징)
@@ -49,5 +51,24 @@ public class StationService {
 
         // 상세 데이터는 MapStruct 스타일로 변환해서 리턴
         return mapStruct.toDto(station);
+    }
+//   수정
+    @Transactional
+    public void updateFromDto(StationDto dto){
+        Station station=stationRepository.findById(dto.getStationId())
+                .orElseThrow(()-> new RuntimeException(util.getMessage("errors.not.found")));
+        mapStruct.updateFromDto(dto,station);
+    }
+    /**
+     * 5. 충전소 삭제 (상태 변경: 소프트 딜리트)
+     */
+    @Transactional
+    public void deleteStation(long stationId) {
+        // 1. 상세조회 (존재 여부 확인)
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
+
+        // 2. 삭제 여부 상태값 변경
+        station.setIsDeleted("Y");
     }
 }

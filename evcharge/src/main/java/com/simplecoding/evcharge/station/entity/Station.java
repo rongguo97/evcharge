@@ -2,8 +2,7 @@ package com.simplecoding.evcharge.station.entity;
 
 import com.simplecoding.evcharge.charger.entity.Charger;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -13,13 +12,18 @@ import java.util.List;
 @Table(name = "TB_STATION")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "charger")
+@SequenceGenerator(
+        name = "SQ_STATION_JPA",      // JPA 시퀀스 이름
+        sequenceName = "SQ_STATION",  // DB 시퀀스 이름
+        initialValue = 1,
+        allocationSize = 1
+)
+@EqualsAndHashCode(of = "stationId", callSuper = false)
 public class Station {
-
-    @
-
-
-
-            Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long stationId; // 충전소 고유 번호 (PK)
 
