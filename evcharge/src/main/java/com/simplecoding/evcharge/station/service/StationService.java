@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -39,10 +41,9 @@ public class StationService {
         return stationRepository.selectStationList(searchKeyword, pageable);
     }
 
-    /**
-     * 2. 특정 충전소 상세 조회
-     * 상세 조회는 ID로 한 건만 가져오는 기본 기능을 쓰고, MapStruct로 변환하는 것이 효율적입니다.
-     */
+
+//      특정 충전소 상세 조회: 충전소 클릭해서 조회
+
     @Transactional(readOnly = true)
     public StationDto selectStationDetail(Long stationId) {
         // 상세 조회는 JPA 기본 findById를 사용 (엔티티 반환)
@@ -51,6 +52,16 @@ public class StationService {
 
         // 상세 데이터는 MapStruct 스타일로 변환해서 리턴
         return mapStruct.toDto(station);
+    }
+//    충전기 타입에 따라 검색해서 조회
+    public List<StationDto> selectStationListByType(String cType) {
+        // 1. 레포지토리에서 타입으로 필터링된 엔티티 리스트 조회
+        List<Station> stations = stationRepository.findByChargerType(cType);
+
+        // 2. 엔티티 리스트를 DTO 리스트로 변환 (MapStruct 활용)
+        return stations.stream()
+                .map(mapStruct::toDto)
+                .collect(Collectors.toList());
     }
 //   수정
     @Transactional

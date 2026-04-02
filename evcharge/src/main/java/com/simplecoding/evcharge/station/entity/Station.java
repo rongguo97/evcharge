@@ -22,6 +22,7 @@ import java.util.List;
 )
 @EqualsAndHashCode(of = "stationId", callSuper = false)
 public class Station {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long stationId; // 충전소 고유 번호 (PK)

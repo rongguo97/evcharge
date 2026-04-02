@@ -15,6 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/station") // 요청하신 대로 /station 주소 사용
 @RequiredArgsConstructor
@@ -48,10 +51,9 @@ public class StationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /**
-     * 2. 특정 충전소 상세 조회
-     * 호출 예: /api/station/1
-     */
+
+
+//     충전소 하나 조회
     @GetMapping("/{stationId}")
     public ResponseEntity<ApiResponse<StationDto>> selectStationDetail(@PathVariable long stationId) {
 
@@ -60,6 +62,17 @@ public class StationController {
 
         // 2. ApiResponse 담기 (단건 조회이므로 페이징 정보는 0, 0 혹은 제외 가능)
         ApiResponse<StationDto> response = new ApiResponse<>(true, "상세조회 성공", dto, 0, 0);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+//    타입 조회
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<StationDto>>> getStationsByType(@RequestParam("type") String cType) {
+        List<StationDto> list = stationService.selectStationListByType(cType);
+
+        // 목록 조회이므로 데이터 개수를 count에 넣어줍니다.
+        ApiResponse<List<StationDto>> response =
+                new ApiResponse<>(true, "타입별 충전소 조회 성공", list, list.size(), 1);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     //    수정:@PutMapping사용

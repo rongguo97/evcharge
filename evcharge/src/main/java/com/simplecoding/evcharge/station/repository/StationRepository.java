@@ -26,4 +26,7 @@ public interface StationRepository extends JpaRepository<Station, Long> {
     Page<StationDto> selectStationList(@Param("searchKeyword") String searchKeyword,
                                        Pageable pageable);
 
+    @Query("SELECT DISTINCT s FROM Station s JOIN s.chargers c " +
+            "WHERE c.cType = :cType AND s.isDeleted = 'N'")
+    List<Station> findByChargerType(@Param("cType") String cType);
 }
