@@ -3,7 +3,6 @@ package com.simplecoding.evcharge.station.entity;
 import com.simplecoding.evcharge.charger.entity.Charger;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
