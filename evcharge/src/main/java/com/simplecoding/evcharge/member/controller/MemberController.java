@@ -21,20 +21,14 @@ public class MemberController {
 @GetMapping("/{email}")
 public ResponseEntity<ApiResponse<MemberDto>> getMemberDetail(@PathVariable("email") String email) {
     MemberDto dto = memberService.selectMemberDetail(email);
-
-    // 기존 방식: 데이터가 1개여도 페이징 자리에 0, 0을 넣어줍니다.
     ApiResponse<MemberDto> response = new ApiResponse<>(true, "상세조회 성공", dto, 0, 0);
-
     return new ResponseEntity<>(response, HttpStatus.OK);
 }
 
     @PutMapping("")
     public ResponseEntity<ApiResponse<String>> updateMember(@RequestBody MemberDto memberDto) {
         memberService.updateMember(memberDto);
-
-        // 수정 성공 시에도 동일한 구조 유지
         ApiResponse<String> response = new ApiResponse<>(true, "수정 성공", "SUCCESS", 0, 0);
-
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

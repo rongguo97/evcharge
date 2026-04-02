@@ -26,4 +26,9 @@ public interface ChargerRepository extends JpaRepository<Charger, Long> {
     """)
     List<ChargerDto> selectChargerList(@Param("stationId") Long stationId);
 
+    @Query("SELECT c FROM Charger c " +
+            "WHERE c.cType = :cType " +
+            "AND c.cStatus = :cStatus")
+    List<Charger> findAvailableChargers(@Param("cType") String cType,
+                                        @Param("cStatus") String cStatus);
 }
