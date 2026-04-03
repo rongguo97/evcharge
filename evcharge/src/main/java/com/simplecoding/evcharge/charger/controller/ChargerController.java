@@ -40,15 +40,42 @@ public class ChargerController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @GetMapping("/filter")
-    public ResponseEntity<ApiResponse<List<ChargerDto>>> getFilteredChargers(
+//   타입(속도)별 조회
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<ChargerDto>>> getChargersByType(
             @RequestParam("type") String cType,
             @RequestParam("status") String cStatus) {
 
         List<ChargerDto> list = chargerService.selectAvailableChargers(cType, cStatus);
-
         ApiResponse<List<ChargerDto>> response =
-                new ApiResponse<>(true, "필터링된 충전기 조회 성공", list, list.size(), 0);
+                new ApiResponse<>(true, "타입별 충전기 조회 성공", list, list.size(), 0);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+//   커넥팅별조회
+    @GetMapping("/connector")
+    public ResponseEntity<ApiResponse<List<ChargerDto>>> getChargersByConnector(
+            @RequestParam("connector") String cConnector,
+            @RequestParam("status") String cStatus) {
+
+        List<ChargerDto> list = chargerService.findByCConnectorAndCStatus(cConnector, cStatus);
+        ApiResponse<List<ChargerDto>> response =
+                new ApiResponse<>(true, "커넥터별 충전기 조회 성공", list, list.size(), 0);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+//    전체조회
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<List<ChargerDto>>> getFilteredChargers(
+            @RequestParam("type") String cType,
+            @RequestParam("connector") String cConnector,
+            @RequestParam("status") String cStatus) {
+
+        List<ChargerDto> list = chargerService.findFilteredChargers(cConnector, cType, cStatus);
+        ApiResponse<List<ChargerDto>> response =
+                new ApiResponse<>(true, "통합 필터 충전기 검색 성공", list, list.size(), 0);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

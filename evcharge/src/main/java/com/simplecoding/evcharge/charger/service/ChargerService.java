@@ -38,13 +38,30 @@ public class ChargerService {
 //      특정 타입과 상태를 기준으로 충전기 목록 조회 (예: FAST & AVAILABLE)
     @Transactional(readOnly = true)
     public List<ChargerDto> selectAvailableChargers(String cType, String cStatus) {
-        List<Charger> chargers = chargerRepository.findAvailableChargers(cType, cStatus);
+        List<Charger> chargers = chargerRepository.findByCTypeAndCStatus(cType, cStatus);
 
         return chargers.stream()
                 .map(mapStruct::toDto)
                 .collect(Collectors.toList());
     }
+//    커넥터와 상태 기준으로 충전기 조회
+@Transactional(readOnly = true)
+public List<ChargerDto> findByCConnectorAndCStatus(String cConnector, String cStatus) {
+    List<Charger> chargers = chargerRepository.findByCConnectorAndCStatus(cConnector, cStatus);
 
+    return chargers.stream()
+            .map(mapStruct::toDto)
+            .collect(Collectors.toList());
+}
+//통합필터
+@Transactional(readOnly = true)
+public List<ChargerDto> findFilteredChargers(String cType,String cConnector ,String cStatus) {
+    List<Charger> chargers = chargerRepository.findFilteredChargers(cConnector,cType,cStatus);
+
+    return chargers.stream()
+            .map(mapStruct::toDto)
+            .collect(Collectors.toList());
+}
 //      3. 충전기 정보 수정 (상태 변경 등)
 //      StationService의 updateFromDto 방식과 동일하게 더티 체킹 활용
     @Transactional
@@ -53,6 +70,7 @@ public class ChargerService {
                 .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
         mapStruct.updateFromDto(dto, charger);
     }
+
 //      4. 충전기 삭제 (소프트 딜리트)
 //      StationService의 deleteStation 방식과 동일하게 구현
     @Transactional
