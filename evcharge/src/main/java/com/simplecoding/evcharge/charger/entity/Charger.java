@@ -3,6 +3,7 @@ package com.simplecoding.evcharge.charger.entity;
 import com.simplecoding.evcharge.station.entity.Station;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "TB_CHARGER")
@@ -27,6 +28,9 @@ public class Charger {
     @JoinColumn(name = "STATION_ID")
     private Station station;
     private String cType; // 충전 방식 (급속/완속)
+    @Column(name = "C_CONNECTOR", nullable = false)
+    @ColumnDefault("'DC_COMBO'")
+    private String cConnector; //충전방식(커넥터)
     @Column(columnDefinition = "VARCHAR2(20) DEFAULT 'AVAILABLE'")    //
     private String cStatus; // 현재 상태 (AVAILABLE, CHARGING, FAULT 등)
     private String isDeleted = "N";

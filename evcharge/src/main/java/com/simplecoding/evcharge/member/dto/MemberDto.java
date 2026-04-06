@@ -17,6 +17,7 @@ public class MemberDto {
     private String carNumber;
     private String phoneNumber;
     private String role;
+    private String grade;
     private String isDeleted;
     private LocalDateTime insertTime;
     private LocalDateTime updateTime;
