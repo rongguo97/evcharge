@@ -40,6 +40,10 @@ public class Member {
     @ColumnDefault("'USER'")
     private String role;
 
+    @Column(length = 20)
+    @ColumnDefault("'USER'")
+    private String grade;
+
     @Column(name = "IS_DELETED", length = 1)
     @ColumnDefault("'N'")
     private String isDeleted;

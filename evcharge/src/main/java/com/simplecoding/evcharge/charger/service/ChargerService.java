@@ -1,70 +1,66 @@
 package com.simplecoding.evcharge.charger.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simplecoding.evcharge.charger.dto.ChargerDto;
 import com.simplecoding.evcharge.charger.entity.Charger;
 import com.simplecoding.evcharge.charger.repository.ChargerRepository;
-import com.simplecoding.evcharge.common.CommonUtil;
 import com.simplecoding.evcharge.common.MapStruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
+/**
+ * 공공데이터 → DB 저장 서비스
+ */
 @Service
 @RequiredArgsConstructor
 public class ChargerService {
-
-    private final ChargerRepository chargerRepository;
-    private final MapStruct mapStruct;
-    private final CommonUtil util; // StationService와 동일하게 util 주입
-
-    /**
-     * 1. 특정 충전소의 충전기 목록 조회
-     * 레포지토리에서 이미 List<ChargerDto>로 반환하므로 추가 변환이 필요 없음
-     */
-    @Transactional(readOnly = true)
-    public List<ChargerDto> selectChargerList(Long stationId) {
-        // 특정 충전소 ID에 해당하는 삭제되지 않은 충전기 목록 조회
-        return chargerRepository.selectChargerList(stationId);
-    }
+    private final ChargerRepository repository;                    // 레포지토리 DI
+    private final MapStruct struct;                           // 복사 플러그인 DI
+    private final ObjectMapper om = new ObjectMapper();       // 공공데이터(JSON(js)) 해석하는 플로그인
 
     /**
-     * 2. 특정 충전기 상세 조회
-     * StationService의 상세 조회 방식과 동일하게 작성
+     * 공공데이터(JSON 데이터)를 받아 DB에 저장
      */
-    @Transactional(readOnly = true)
-    public ChargerDto selectChargerDetail(Long chargerId) {
-        Charger charger = chargerRepository.findById(chargerId)
-                .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
+    public void save(String json) throws Exception {
+        JsonNode root = om.readTree(json);                    // 공공데이터(json: 글자) -> 객체형태로 변경
+        JsonNode nodes = root.get("data");                    // 공공데이터의 결과를 받기(data 필드(속성, 배열)에 있음)
 
-        return mapStruct.toDto(charger);
-    }
+        for (JsonNode data : nodes) {
 
-    /**
-     * 3. 충전기 정보 수정 (상태 변경 등)
-     * StationService의 updateFromDto 방식과 동일하게 더티 체킹 활용
-     */
-    @Transactional
-    public void updateFromDto(ChargerDto dto) {
-        Charger charger = chargerRepository.findById(dto.getChargerId())
-                .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
+            ChargerDto dto = new ChargerDto();
+            dto.setSido(data.get("시도").asText());                     // 시도
+            dto.setGunggu(data.get("군구").asText());                    // 군구
+            dto.setAddress(data.get("주소").asText());                  // 주소
+            dto.setStationName(data.get("충전소명").asText());           // 충전소명
 
-        // MapStruct를 이용해 DTO -> Entity 정보 복사 (더티 체킹 발생)
-        mapStruct.updateFromDto(dto, charger);
-    }
+            dto.setFacilityL(data.get("시설구분(대)").asText());        // 시설구분(대)
+            dto.setFacilityS(data.get("시설구분(소)").asText());        // 시설구분(소)
 
-    /**
-     * 4. 충전기 삭제 (소프트 딜리트)
-     * StationService의 deleteStation 방식과 동일하게 구현
-     */
-    @Transactional
-    public void deleteCharger(long chargerId) {
-        // 1. 존재 여부 확인
-        Charger charger = chargerRepository.findById(chargerId)
-                .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
+            dto.setModelL(data.get("기종(대)").asText());               // 기종(대)
+            dto.setModelS(data.get("기종(소)").asText());               // 기종(소)
 
-        // 2. 삭제 여부 상태값 변경
-        charger.setIsDeleted("Y");
+            dto.setOperatorL(data.get("운영기관(대)").asText());        // 운영기관(대)
+            dto.setOperatorS(data.get("운영기관(소)").asText());        // 운영기관(소)
+
+            dto.setFastChargeAmount(data.get("급속충전량").asText());    // 급속충전량
+            dto.setChargerType(data.get("충전기타입").asText());        // 충전기타입
+            dto.setUserRestriction(data.get("이용자제한").asText());    // 이용자제한
+
+            dto.setChargerId(data.get("충전기ID").asLong());             // 충전기ID (int 형변환)
+
+// 💡 STATION_ID 생성 (주소와 이름을 합쳐서 고유값으로 활용)
+            String generatedStationId = dto.getAddress() + "_" + dto.getStationName();
+            dto.setStationId(generatedStationId);
+            Charger entity = struct.toEntity(dto);                 // 위의 dto -> entity 로 복사
+
+//          중복되면 무결성 에러(Unique 제약) -> 에러난것은 무시하고 계속 처리
+            try {
+                repository.save(entity);                      // db 저장
+
+            } catch (Exception e) {
+//                에러나면 무시하고 계속 진행
+            }
+        }
     }
 }
