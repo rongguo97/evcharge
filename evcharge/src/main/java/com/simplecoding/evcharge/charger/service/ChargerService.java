@@ -7,64 +7,102 @@ import com.simplecoding.evcharge.charger.entity.Charger;
 import com.simplecoding.evcharge.charger.repository.ChargerRepository;
 import com.simplecoding.evcharge.common.MapStruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 공공데이터 → DB 저장 서비스
- */
+import java.util.List;
+
+@Log4j2
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ChargerService {
-    private final ChargerRepository repository;                    // 레포지토리 DI
-    private final MapStruct struct;                           // 복사 플러그인 DI
-    private final ObjectMapper om = new ObjectMapper();       // 공공데이터(JSON(js)) 해석하는 플로그인
+    private final ChargerRepository chargerRepository;
+    private final MapStruct chargerstruct;
+    private final ObjectMapper om = new ObjectMapper();
 
     /**
      * 공공데이터(JSON 데이터)를 받아 DB에 저장
      */
+    @Transactional // 저장 로직이므로 readOnly가 아닌 일반 Transactional 필요
     public void save(String json) throws Exception {
-        JsonNode root = om.readTree(json);                    // 공공데이터(json: 글자) -> 객체형태로 변경
-        JsonNode nodes = root.get("data");                    // 공공데이터의 결과를 받기(data 필드(속성, 배열)에 있음)
+        JsonNode root = om.readTree(json);
+        JsonNode nodes = root.get("data");
 
         for (JsonNode data : nodes) {
-
             ChargerDto dto = new ChargerDto();
-            dto.setSido(data.get("시도").asText());                     // 시도
-            dto.setGunggu(data.get("군구").asText());                    // 군구
-            dto.setAddress(data.get("주소").asText());                  // 주소
-            dto.setStationName(data.get("충전소명").asText());           // 충전소명
+            dto.setSido(data.get("시도").asText());
+            dto.setGunggu(data.get("군구").asText());
+            dto.setAddress(data.get("주소").asText());
+            dto.setStationName(data.get("충전소명").asText());
+            dto.setFacilityL(data.get("시설구분(대)").asText());
+            dto.setFacilityS(data.get("시설구분(소)").asText());
+            dto.setModelL(data.get("기종(대)").asText());
+            dto.setModelS(data.get("기종(소)").asText());
+            dto.setOperatorL(data.get("운영기관(대)").asText());
+            dto.setOperatorS(data.get("운영기관(소)").asText());
+            dto.setFastChargeAmount(data.get("급속충전량").asText());
+            dto.setChargerType(data.get("충전기타입").asText());
+            dto.setUserRestriction(data.get("이용자제한").asText());
+            dto.setChargerId(data.get("충전기ID").asInt());
 
-            dto.setFacilityL(data.get("시설구분(대)").asText());        // 시설구분(대)
-            dto.setFacilityS(data.get("시설구분(소)").asText());        // 시설구분(소)
-
-            dto.setModelL(data.get("기종(대)").asText());               // 기종(대)
-            dto.setModelS(data.get("기종(소)").asText());               // 기종(소)
-
-            dto.setOperatorL(data.get("운영기관(대)").asText());        // 운영기관(대)
-            dto.setOperatorS(data.get("운영기관(소)").asText());        // 운영기관(소)
-
-            dto.setFastChargeAmount(data.get("급속충전량").asText());    // 급속충전량
-            dto.setChargerType(data.get("충전기타입").asText());        // 충전기타입
-            dto.setUserRestriction(data.get("이용자제한").asText());    // 이용자제한
-
-            dto.setChargerId(data.get("충전기ID").asLong());             // 충전기ID
-            dto.setStationId(data.get("충전소ID").asText());             // 충전기ID
-
-// 💡 STATION_ID 생성 (주소와 이름을 합쳐서 고유값으로 활용)
             String generatedStationId = dto.getAddress() + "_" + dto.getStationName();
             dto.setStationId(generatedStationId);
-            Charger entity = struct.toEntity(dto);                 // 위의 dto -> entity 로 복사
 
-//          중복되면 무결성 에러(Unique 제약) -> 에러난것은 무시하고 계속 처리
+            Charger entity = chargerstruct.toEntity(dto);
+
             try {
-                repository.save(entity);                      // db 저장
-
+                chargerRepository.save(entity);
             } catch (Exception e) {
-//                에러나면 무시하고 계속 진행
+                // 중복 데이터 발생 시 무시
             }
-        }
+        } // 👈 for문 종료
+    } // 👈 save 메서드 종료
+
+
+//1. 전체 목록 조회(키워드 검색+페이징)
+
+    public Page<ChargerDto> selectChargerList(String searchKeyword, Pageable pageable) {
+        return chargerRepository.selectChargerList(searchKeyword, pageable);
     }
-//
+
+    /**
+     * 2. 단일 상세 조회 (ID 기준)
+     */
+    public ChargerDto findById(long id) {
+        Charger charger = chargerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("해당 충전기 정보를 찾을 수 없습니다."));
+        return chargerstruct.toDto(charger);
+    }
+
+    /**
+     * 3. 특정 STATION_ID에 속한 모든 충전기 상세 조회
+     */
+    public List<ChargerDto> findByStationId(String stationId) {
+        return chargerRepository.findByStationIdDto(stationId);
+    }
+
+    /**
+     * 4. 지역별(시도/군구) 조회
+     */
+    public List<ChargerDto> findBySidoAndGungguDto(String sido, String gunggu) {
+        return chargerRepository.findBySidoAndGungguDto(sido, gunggu);
+    }
+
+    /**
+     * 5. 기종별(급속/완속) 조회
+     */
+    public List<ChargerDto> findByModelLDto(String modelL) {
+        return chargerRepository.findByModelLDto(modelL);
+    }
+
+    /**
+     * 6. 타입별(커넥터) 조회
+     */
+    public List<ChargerDto> findByChargerTypeDto(String chargerType) {
+        return chargerRepository.findByChargerTypeDto(chargerType);
+    }
 }
