@@ -9,10 +9,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class PaymentDto {
-    private Long id;
+    private Long payId;            // id -> payId (선택사항이나 일관성을 위해 추천)
     private Long amount;
-    private String payMethod;
-    private String status;
+    private String method;         // payMethod -> method 로 변경
+    private String paymentType;    // 신규 추가: CHARGE / USE
+    private Long reservationId;    // 신규 추가
     private String email;
-    private LocalDateTime insertTime; // 결제 일시
+    private LocalDateTime createdAt; // insertTime -> createdAt 으로 변경
 }

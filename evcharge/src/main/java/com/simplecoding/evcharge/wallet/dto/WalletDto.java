@@ -7,8 +7,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@Builder
 public class WalletDto {
-    private Long id;         // 지갑 고유 번호
+    private Long walletId;   // 지갑 고유 번호 (id에서 명칭 변경)
     private String email;    // 회원 이메일
     private Long point;      // 현재 잔액
 }
