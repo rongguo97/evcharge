@@ -8,9 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class ChargerDto {
-    private long id;           // 충전소id
+    private long id;                    // id
     private String stationId;           //충전소id
-    private Long chargerId;             //충전기id
+    private int chargerId;             //충전기id
     private String sido;                // 시도
     private String gunggu;              // 군구
     private String address;             // 주소
