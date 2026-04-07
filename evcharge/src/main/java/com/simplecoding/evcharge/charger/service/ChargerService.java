@@ -76,18 +76,10 @@ public class ChargerService {
         return chargerstruct.toDto(charger);
     }
 
-
-//     3. ID로 상세 조회
-    public List<ChargerDto> findByStationId(String stationId) {
-        return chargerRepository.findByStationIdDto(stationId);
-    }
-
-
 //     4. 시도/군구로 조회
     public List<ChargerDto> findBySidoAndGungguDto(String sido, String gunggu) {
         return chargerRepository.findBySidoAndGungguDto(sido, gunggu);
     }
-
 
 //     5. 기종별(급속/완속) 조회
     public List<ChargerDto> findByModelLDto(String modelL) {

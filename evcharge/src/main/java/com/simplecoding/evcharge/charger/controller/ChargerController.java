@@ -58,20 +58,9 @@ public class ChargerController {
         return ResponseEntity.ok(response);
     }
 
-//   id로 조회
-    @Operation(summary = "충전소별 충전기 목록 조회", description = "STATION_ID를 이용해 해당 충전소의 모든 충전기를 조회합니다.")
-    @GetMapping("/charger/station/{stationId}")
-    public ResponseEntity<ApiResponse<List<ChargerDto>>> findByStationId(@PathVariable String stationId) {
-
-        List<ChargerDto> list = chargerService.findByStationId(stationId);
-        ApiResponse<List<ChargerDto>> response = new ApiResponse<>(true, "충전소별 조회 성공", list, 0, (long) list.size());
-
-        return ResponseEntity.ok(response);
-    }
-
 // 시도,군구로 조회
     @Operation(summary = "지역별 충전소 조회", description = "시도와 군구 정보를 이용해 충전소를 조회합니다.")
-    @GetMapping("/charger/{sido}/{gunggu}")
+    @GetMapping("/charger/region/{sido}/{gunggu}")
     public ResponseEntity<ApiResponse<List<ChargerDto>>> findBySidoAndGungguDto(
             @RequestParam String sido,
             @RequestParam String gunggu) {
@@ -84,7 +73,7 @@ public class ChargerController {
 
     //  기종별조회(급속,완속)
     @Operation(summary = "속도별 충전기 조회", description = "충전기 타입(커넥터) 정보를 이용해 조회합니다.")
-    @GetMapping("/charger/{modelL}")
+    @GetMapping("/charger/model-l/{modelL}")
     public ResponseEntity<ApiResponse<List<ChargerDto>>> findByModelLDto(@RequestParam String modelL) {
 
         List<ChargerDto> list = chargerService.findByModelLDto(modelL);
@@ -94,7 +83,7 @@ public class ChargerController {
     }
     //  기종별조회(급속,완속)
     @Operation(summary = "kwh별 충전기 조회", description = "충전기 타입(커넥터) 정보를 이용해 조회합니다.")
-    @GetMapping("/charger/{modelS}")
+    @GetMapping("/charger/model-s/{modelS}")
     public ResponseEntity<ApiResponse<List<ChargerDto>>> findByModelSDto(@RequestParam String modelS) {
 
         List<ChargerDto> list = chargerService.findByModelSDto(modelS);
@@ -104,7 +93,7 @@ public class ChargerController {
     }
 //  타입별조회
     @Operation(summary = "타입별 충전기 조회", description = "충전기 타입(커넥터) 정보를 이용해 조회합니다.")
-    @GetMapping("/charger/{chargerType}")
+    @GetMapping("/charger/type/{chargerType}")
     public ResponseEntity<ApiResponse<List<ChargerDto>>> findByChargerTypeDto(@RequestParam String chargerType) {
 
         List<ChargerDto> list = chargerService.findByChargerTypeDto(chargerType);
