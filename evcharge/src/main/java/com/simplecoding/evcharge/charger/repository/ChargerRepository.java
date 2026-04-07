@@ -24,17 +24,6 @@ import java.util.List;
     """)
         Page<ChargerDto> selectChargerList(@Param("searchKeyword") String searchKeyword, Pageable pageable);
 
-        // 2. 특정 STATION_ID에 속한 모든 충전기 상세 조회
-        @Query("""
-        SELECT new com.simplecoding.evcharge.charger.dto.ChargerDto(
-            c.id, c.stationId, c.chargerId, c.sido, c.gunggu, c.address, c.stationName,
-            c.facilityL, c.facilityS, c.modelL, c.modelS, c.operatorL, c.operatorS,
-            c.fastChargeAmount, c.chargerType, c.userRestriction
-        ) FROM Charger c
-        WHERE c.stationId = :stationId
-    """)
-        List<ChargerDto> findByStationIdDto(@Param("stationId") String stationId);
-
         // 3. 지역별(시도/군구) 조회
         @Query("""
         SELECT new com.simplecoding.evcharge.charger.dto.ChargerDto(

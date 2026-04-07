@@ -81,19 +81,7 @@ class ChargerServiceTest {
         assertThat(result).isNotNull();
     }
 
-    @Test
-    @DisplayName("충전소 ID로 목록 조회 테스트")
-    void findByStationId() {
-        // given
-        String stationId = "ST_01";
-        given(chargerRepository.findByStationIdDto(stationId)).willReturn(List.of(new ChargerDto()));
 
-        // when
-        List<ChargerDto> result = chargerService.findByStationId(stationId);
-
-        // then
-        assertThat(result).isNotEmpty();
-    }
 
     @Test
     @DisplayName("지역별 조회 테스트")
