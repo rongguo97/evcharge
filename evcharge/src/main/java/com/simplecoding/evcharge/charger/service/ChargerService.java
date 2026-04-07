@@ -64,44 +64,34 @@ public class ChargerService {
 
 
 //1. 전체 목록 조회(키워드 검색+페이징)
-
     public Page<ChargerDto> selectChargerList(String searchKeyword, Pageable pageable) {
         return chargerRepository.selectChargerList(searchKeyword, pageable);
     }
 
-    /**
-     * 2. 단일 상세 조회 (ID 기준)
-     */
+
+//     2. 단일 상세 조회 (ID 기준)
     public ChargerDto findById(long id) {
         Charger charger = chargerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("해당 충전기 정보를 찾을 수 없습니다."));
         return chargerstruct.toDto(charger);
     }
 
-    /**
-     * 3. 특정 STATION_ID에 속한 모든 충전기 상세 조회
-     */
-    public List<ChargerDto> findByStationId(String stationId) {
-        return chargerRepository.findByStationIdDto(stationId);
-    }
-
-    /**
-     * 4. 지역별(시도/군구) 조회
-     */
+//     4. 시도/군구로 조회
     public List<ChargerDto> findBySidoAndGungguDto(String sido, String gunggu) {
         return chargerRepository.findBySidoAndGungguDto(sido, gunggu);
     }
 
-    /**
-     * 5. 기종별(급속/완속) 조회
-     */
+//     5. 기종별(급속/완속) 조회
     public List<ChargerDto> findByModelLDto(String modelL) {
         return chargerRepository.findByModelLDto(modelL);
     }
 
-    /**
-     * 6. 타입별(커넥터) 조회
-     */
+    //     6. 기종별(kwh) 조회
+    public List<ChargerDto> findByModelSDto(String modelS) {
+        return chargerRepository.findByModelSDto(modelS);
+    }
+
+//   7.커넥터별 조회
     public List<ChargerDto> findByChargerTypeDto(String chargerType) {
         return chargerRepository.findByChargerTypeDto(chargerType);
     }

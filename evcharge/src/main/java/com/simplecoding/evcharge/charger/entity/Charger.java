@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "TB_CHARGER")
 @SequenceGenerator(
-        name = "charger_seq",
-        sequenceName = "SEQ_CHARGER_ID",   // ⭐ 시퀀스 이름 맞춤
+        name = "CHARGER_SEQ_GEN",
+        sequenceName = "SEQ_CHARGER_ID",   // 시퀀스 이름 맞춤
         allocationSize = 1
 )
 @Getter
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode
 public class Charger {
         @Id
-        @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charger_seq")
+        @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "CHARGER_SEQ_GEN")
 
         private long id;           // 충전소id
 
@@ -71,4 +71,5 @@ public class Charger {
 
         @Column(name = "CREATE_DATE", insertable = false, updatable = false)
         private LocalDateTime createDate;   // DB DEFAULT SYSDATE 사용 시 설정
+
 }
