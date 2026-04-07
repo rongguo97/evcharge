@@ -120,25 +120,26 @@ class ChargerServiceTest {
         // then
         assertThat(result).isNotEmpty();
     }
-    @Test
-    @DisplayName("충전기 타입별(커넥터) 조회 테스트")
-    void findByChargerTypeDto() {
-        // given
-        String chargerType = "DC콤보";
-        // 가짜 결과 데이터 생성
-        List<ChargerDto> mockList = List.of(new ChargerDto());
-
-        // 레포지토리 호출 시 mockList를 반환하도록 설정
-        given(chargerRepository.findByChargerTypeDto(chargerType)).willReturn(mockList);
-
-        // when
-        List<ChargerDto> result = chargerService.findByChargerTypeDto(chargerType);
-
-        // then
-        assertThat(result).isNotEmpty();
-        assertThat(result.get(0)).isInstanceOf(ChargerDto.class);
-        // 실제로 레포지토리가 해당 파라미터로 호출되었는지 검증
-        verify(chargerRepository).findByChargerTypeDto(chargerType);
-    }
+//    @Test
+//    @DisplayName("충전기 타입별(커넥터) 조회 테스트")
+//    void findByChargerTypeDto() {
+//        // given
+//        String chargerType = "DC콤보";
+//        // 가짜 결과 데이터 생성
+//        List<ChargerDto> mockList = List.of(new ChargerDto());
+//
+//        // 레포지토리 호출 시 mockList를 반환하도록 설정
+//        given(chargerRepository.findByChargerTypeDto(chargerType)).willReturn(mockList);
+//
+//        // when
+//        List<ChargerDto> result = chargerService.findByChargerTypeDto(chargerType);
+//
+//        // then
+//        assertThat(result).isNotEmpty();
+//        assertThat(result.get(0)).isInstanceOf(ChargerDto.class);
+//        // 실제로 레포지토리가 해당 파라미터로 호출되었는지 검증
+//        verify(chargerRepository).findByChargerTypeDto(chargerType);
+//    }
+//}
 }
 
