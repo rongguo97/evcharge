@@ -8,12 +8,14 @@ import com.simplecoding.evcharge.charger.repository.ChargerRepository;
 import com.simplecoding.evcharge.common.MapStruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 공공데이터 → DB 저장 서비스
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChargerService {
     private final ChargerRepository repository;                    // 레포지토리 DI
     private final MapStruct struct;                           // 복사 플러그인 DI
@@ -47,7 +49,8 @@ public class ChargerService {
             dto.setChargerType(data.get("충전기타입").asText());        // 충전기타입
             dto.setUserRestriction(data.get("이용자제한").asText());    // 이용자제한
 
-            dto.setChargerId(data.get("충전기ID").asLong());             // 충전기ID (int 형변환)
+            dto.setChargerId(data.get("충전기ID").asLong());             // 충전기ID
+            dto.setStationId(data.get("충전소ID").asText());             // 충전기ID
 
 // 💡 STATION_ID 생성 (주소와 이름을 합쳐서 고유값으로 활용)
             String generatedStationId = dto.getAddress() + "_" + dto.getStationName();
@@ -63,4 +66,5 @@ public class ChargerService {
             }
         }
     }
+//
 }
