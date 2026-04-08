@@ -16,23 +16,24 @@ public class PaymentService {
     private final WalletService walletService;
 
     /**
-     * 포인트 충전 처리 (충전은 보통 카드로 하므로 PAYMENT_TYPE은 'CHARGE', METHOD는 'CARD')
+     * 포인트 충전 처리
      */
     @Transactional
     public void chargePointWithHistory(Member member, Long amount, String payMethod) {
 
-        // 1. 결제 기록 생성 (신규 필드 반영)
+        // 1. 결제 기록 생성 (수정된 부분: member 객체 대신 email 문자열을 넣음)
         Payment payment = Payment.builder()
-                .member(member)
+                .email(member.getEmail())  // [수정] .member(member) -> .email(member.getEmail())
                 .amount(amount)
-                .method(payMethod)         // payMethod -> method 로 변경됨
-                .paymentType("CHARGE")    // 충전임을 명시
-                .reservationId(null)      // 충전 시에는 예약 번호가 없음
+                .method(payMethod)
+                .paymentType("CHARGE")
+                .reservationId(null)
                 .build();
 
         paymentRepository.save(payment);
 
         // 2. 실제 지갑 포인트 증가
+        // walletService 내부에서도 Member 객체에서 email을 뽑아 쓰도록 수정.
         walletService.chargePoint(member, amount);
     }
 }

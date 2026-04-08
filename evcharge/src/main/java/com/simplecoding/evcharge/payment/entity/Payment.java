@@ -1,52 +1,43 @@
 package com.simplecoding.evcharge.payment.entity;
 
-import com.simplecoding.evcharge.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "TB_PAYMENT")
+@Table(name = "TB_PAYMENT") // 💡 결제 테이블 연결
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-// BaseTimeEntity 상속 제거: 신규 ERD에 맞춰 CREATED_AT을 직접 관리합니다.
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor @Builder
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "pay_seq")
     @SequenceGenerator(name = "pay_seq", sequenceName = "SQ_PAYMENT", allocationSize = 1)
-    @Column(name = "PAY_ID") // 1. 컬럼명 PAY_ID로 변경
-    private Long id;
+    @Column(name = "PAY_ID") //
+    private Long payId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "EMAIL")
-    private Member member;
+    @Column(name = "EMAIL", nullable = false) //
+    private String email;
 
-    @Column(name = "RESERVATION_ID") // 2. 신규 추가: 예약 내역과 연결
+    @Column(name = "RESERVATION_ID") // 💡 예약과 연결되는 핵심 컬럼
     private Long reservationId;
 
-    @Column(name = "PAYMENT_TYPE", length = 20) // 3. 신규 추가: 충전(CHARGE)인지 사용(USE)인지 구분
-    private String paymentType;
+    @Column(name = "PAYMENT_TYPE") //
+    private String paymentType; // 예: 'POINT_USAGE'
 
-    @Column(name = "AMOUNT", nullable = false)
-    private Long amount; // 결제 또는 사용 금액
+    @Column(name = "AMOUNT", nullable = false) //
+    private Long amount;
 
-    @Column(name = "METHOD", length = 50) // 4. 컬럼명 METHOD로 변경
-    private String method; // 결제 수단 (CARD, POINT 등)
+    @Column(name = "METHOD") //
+    private String method; // 예: 'POINT'
 
-    @Column(name = "CREATED_AT") // 5. 신규 추가: 결제 일시
+    @Column(name = "CREATED_AT") //
     private LocalDateTime createdAt;
 
-    @Builder
-    public Payment(Member member, Long reservationId, String paymentType, Long amount, String method) {
-        this.member = member;
-        this.reservationId = reservationId;
-        this.paymentType = paymentType;
-        this.amount = amount;
-        this.method = method;
-        this.createdAt = LocalDateTime.now(); // 객체 생성 시 현재 시간 자동 입력
+    @PrePersist // 저장 전 자동으로 현재 시간 세팅
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
     }
 }

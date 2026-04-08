@@ -12,13 +12,14 @@ import java.util.List;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    // 특정 충전기의 예약 시간이 겹치는지 확인하는 쿼리
-    @Query("SELECT r FROM Reservation r WHERE r.charger.id = :chargerId " +
+    // charger.id -> station.stationId로 변경
+    @Query("SELECT r FROM Reservation r WHERE r.station.stationId = :stationId " +
             "AND r.status = 'RESERVED' " +
             "AND ((r.startTime < :end AND r.endTime > :start))")
-    List<Reservation> findOverlapping(@Param("chargerId") Long chargerId,
+    List<Reservation> findOverlapping(@Param("stationId") Long stationId,
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end);
 
-    List<Reservation> findByMemberEmailOrderByStartTimeDesc(String email);
+    // member.email -> email로 변경
+    List<Reservation> findByEmailOrderByStartTimeDesc(String email);
 }
