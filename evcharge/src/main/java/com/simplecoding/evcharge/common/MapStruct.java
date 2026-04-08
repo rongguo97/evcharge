@@ -3,8 +3,8 @@ package com.simplecoding.evcharge.common;
 
 
 
-import com.simplecoding.evcharge.charger.dto.ChargerDto;
-import com.simplecoding.evcharge.charger.entity.Charger;
+import com.simplecoding.evcharge.station.dto.StationDto;
+import com.simplecoding.evcharge.station.entity.Station;
 import com.simplecoding.evcharge.member.dto.MemberDto;
 import com.simplecoding.evcharge.member.entity.Member;
 
@@ -32,13 +32,20 @@ public interface MapStruct {
     void updateFromDto(MemberDto dto, @MappingTarget Member entity);
 //    요약:이메일과 가입일은 건드리지 말고, 리액트에서 보내준 값들 중에서 비어있지 않은(Not Null) 값들만 골라서 기존 회원 정보를 업데이트해라
 
-    // TODO: 충전기 공공데이터
-    ChargerDto toDto(Charger charger);
+    // 1. DTO -> Entity (날짜 포맷 지정)
+    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
+    @Mapping(source = "lng", target = "lng") // DTO의 lng를 Entity의 lng로 매핑
+    Station toEntity(StationDto stationDto);
 
-    Charger toEntity(ChargerDto chargerDto);
+    // 2. Entity -> DTO (날짜 포맷 지정)
+    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
+    @Mapping(source = "lng", target = "lng")
+    StationDto toDto(Station station);
 
-    // TODO: 수정 시 사용: dirty checking 기능(save() 없이 수정 가능)
-    void updateFromDto(ChargerDto chargerDto, @MappingTarget Charger charger);
+    // 3. 수정 시 사용 (Dirty Checking용)
+    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
+    @Mapping(source = "lng", target = "lng")
+    void updateFromDto(StationDto stationDto, @MappingTarget Station station);
 }
 
 
