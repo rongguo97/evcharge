@@ -1,6 +1,6 @@
 package com.simplecoding.evcharge.reservation.entity;
 
-import com.simplecoding.evcharge.charger.entity.Charger;
+import com.simplecoding.evcharge.station.entity.Station;
 import jakarta.persistence.*;
 import jakarta.transaction.Status;
 
@@ -27,5 +27,5 @@ public class ReservationEntity {
 
     @ManyToOne
     @JoinColumn(name = "CHARGER_ID")
-    private Charger charger;
+    private Station station;
 }
