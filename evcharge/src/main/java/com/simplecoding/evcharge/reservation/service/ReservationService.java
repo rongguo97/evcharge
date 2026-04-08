@@ -1,11 +1,11 @@
 package com.simplecoding.evcharge.reservation.service;
 
-import com.simplecoding.evcharge.charger.entity.Charger;
-import com.simplecoding.evcharge.charger.repository.ChargerRepository;
-import com.simplecoding.evcharge.member.entity.Member;
-import com.simplecoding.evcharge.member.repository.MemberRepository;
+import com.simplecoding.evcharge.payment.service.PaymentService;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
+import com.simplecoding.evcharge.station.entity.Station;
+import com.simplecoding.evcharge.station.repository.StationRepository;
+import com.simplecoding.evcharge.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,29 +17,33 @@ import java.time.LocalDateTime;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final ChargerRepository chargerRepository;
-    private final MemberRepository memberRepository;
+    private final StationRepository stationRepository;
+    private final PaymentService paymentService;
+    private final WalletService walletService;
 
     @Transactional
-    public Reservation createReservation(String email, Long chargerId, LocalDateTime startTime) {
-        // 1. 회원 및 충전기 존재 확인
-        Member member = memberRepository.findById(email).orElseThrow();
-        Charger charger = chargerRepository.findById(chargerId).orElseThrow();
+    public Reservation createReservation(String email, Long stationId, LocalDateTime startTime) {
+        // 1. 충전소 존재 확인
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new RuntimeException("충전소를 찾을 수 없습니다."));
 
-        // 2. 이용 시간 계산
-        int durationMinutes = calculateDuration(charger.getChargerType()); // (예: 70분)
-        int bufferMinutes = 10; // 버퍼 타임 10분
-        LocalDateTime endTime = startTime.plusMinutes(durationMinutes + bufferMinutes);
+        // 2. 이용 시간 계산 (메서드 내용 보완)
+        int durationMinutes = calculateDuration(station.getChargerType());
+        LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10); // 버퍼 10분
 
-        // 3. 중복 예약 체크
-        if (!reservationRepository.findOverlapping(chargerId, startTime, endTime).isEmpty()) {
+        // 3. 중복 예약 체크 (Repository 메서드와 stationId 매칭 확인 필요)
+        if (!reservationRepository.findOverlapping(stationId, startTime, endTime).isEmpty()) {
             throw new RuntimeException("이미 해당 시간에 예약이 존재합니다.");
         }
 
-        // 4. 예약 저장
+        // 4. 결제 로직 연동 (필요 시 주석 해제)
+        // walletService에 subtractPoint(String email, Long amount) 메서드가 있다면 사용 가능
+        // walletService.subtractPoint(email, 5000L);
+
+        // 5. 예약 저장 (Lombok Builder 사용)
         Reservation reservation = Reservation.builder()
-                .member(member)
-                .charger(charger)
+                .email(email)
+                .station(station)
                 .startTime(startTime)
                 .endTime(endTime)
                 .status("RESERVED")
@@ -48,11 +52,18 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
-    // 💡 PDF 정책 반영 메서드
-    private int calculateDuration(String type) {
-        if (type.contains("50kW")) return 70;
-        if (type.contains("100kW")) return 40;
-        if (type.contains("7kW")) return 240; // 4시간
-        return 60; // 기본값
+    /**
+     * 충전기 타입에 따른 이용 시간 계산 로직 보완
+     */
+    private int calculateDuration(String chargerType) {
+        if (chargerType == null) return 60; // 기본값
+
+        if (chargerType.contains("급속") || chargerType.contains("100kW")) {
+            return 40; // 급속은 보통 40분
+        } else if (chargerType.contains("50kW")) {
+            return 70; // 50kW는 70분
+        } else {
+            return 60; // 완속 및 기타 60분
+        }
     }
 }
