@@ -99,19 +99,48 @@ public class StationService {
 
     // 3. 현재상태별 조회
     public Page<StationDto> selectStationListByStatus(String status, Pageable pageable) {
-        Page<Station> page = stationRepository.selectStationListByStatus(status, pageable);
+        String statusValue = switch (status) {
+            case "충전가능" -> "1";
+            case "충전중" -> "2";
+            case "고장", "점검", "고장/점검" -> "3";
+            case "통신장애" -> "4";
+            case "통신미연결" -> "5";
+            case "충전종료" -> "6";
+            case "계획정지" -> "7";
+            default -> status; // 이미 숫자 코드로 들어온 경우나 정의되지 않은 값 처리
+        };
+
+        Page<Station> page = stationRepository.selectStationListByStatus(statusValue, pageable);
         return page.map(struct::toDto);
     }
 
     // 4. 충전 타입별 조회
     public Page<StationDto> selectStationListByType(String chargerType, Pageable pageable) {
-        Page<Station> page = stationRepository.selectStationListByType(chargerType, pageable);
+        String typeValue = switch (chargerType) {
+            case "완속" -> "1";
+            case "급속" -> "2";
+            default -> chargerType;
+        };
+
+        Page<Station> page = stationRepository.selectStationListByType(typeValue, pageable);
         return page.map(struct::toDto);
     }
 
     // 5. 충전 방식별 조회
-    public Page<StationDto> selectStationListByMethod(String chargerType, Pageable pageable) {
-        Page<Station> page = stationRepository.selectStationListByMethod(chargerType, pageable);
+    public Page<StationDto> selectStationListByMethod(String method, Pageable pageable) {
+        String methodValue = switch (method) {
+            case "B타입(5핀)" -> "1";
+            case "C타입(5핀)" -> "2";
+            case "BC타입(5핀)" -> "3";
+            case "BC타입(7핀)" -> "4";
+            case "C차 데모", "C차데모" -> "5";
+            case "AC3상" -> "6";
+            case "DC콤보" -> "7";
+            case "DC차데모+DC콤보" -> "8";
+            default -> method;
+        };
+
+        Page<Station> page = stationRepository.selectStationListByMethod(methodValue, pageable);
         return page.map(struct::toDto);
     }
 
