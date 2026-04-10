@@ -19,7 +19,6 @@ public class AdminLogService {
 
     private final AdminLogRepository adminLogRepository;
 
-    // 로그 저장
     @Transactional
     public AdminLogDto.Response saveLog(AdminLogDto.Request request) {
         AdminLog log = AdminLog.builder()
@@ -30,37 +29,25 @@ public class AdminLogService {
                 .targetType(request.getTargetType())
                 .ipAddress(request.getIpAddress())
                 .build();
-
-        AdminLog saved = adminLogRepository.save(log);
-        return toResponse(saved);
+        return toResponse(adminLogRepository.save(log));
     }
 
-    // 전체 로그 조회
     @Transactional(readOnly = true)
     public List<AdminLogDto.Response> getAllLogs() {
         return adminLogRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // 관리자 ID로 조회
     @Transactional(readOnly = true)
     public List<AdminLogDto.Response> getLogsByAdminId(Long adminId) {
         return adminLogRepository.findByAdminId(adminId)
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // 기간 조회
     @Transactional(readOnly = true)
-    public List<AdminLogDto.Response> getLogsByPeriod(
-            LocalDateTime from, LocalDateTime to) {
+    public List<AdminLogDto.Response> getLogsByPeriod(LocalDateTime from, LocalDateTime to) {
         return adminLogRepository.findByCreatedAtBetween(from, to)
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     private AdminLogDto.Response toResponse(AdminLog entity) {
