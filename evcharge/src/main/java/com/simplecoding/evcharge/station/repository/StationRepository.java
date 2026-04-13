@@ -1,5 +1,6 @@
 package com.simplecoding.evcharge.station.repository;
 
+import com.simplecoding.evcharge.station.dto.StationDto;
 import com.simplecoding.evcharge.station.entity.Station;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +30,15 @@ public interface StationRepository extends JpaRepository<Station, Long> {
 //    내 위치에서 주변 조회
     // StationRepository.java
 
-    @Query(value = "SELECT s.*, " +
+    @Query(value = "SELECT " +
+            "s.STATION_ID as stationId, " +
+            "s.STATION_NAME as stationName, " +
+            "s.ADDRESS as address, " +
+            "s.LAT as lat, " +
+            "s.LNG as lng, " +
+            "s.STATUS as status, " +
+            "s.CHARGER_TYPE as chargerType, " +
+            "s.CHARGER_METHOD as chargerMethod, " +
             "(6371 * acos(cos(:userLat * 3.141592653589793 / 180) * cos(s.LAT * 3.141592653589793 / 180) " +
             "* cos((s.LNG * 3.141592653589793 / 180) - (:userLng * 3.141592653589793 / 180)) " +
             "+ sin(:userLat * 3.141592653589793 / 180) * sin(s.LAT * 3.141592653589793 / 180))) AS distance " +
@@ -39,7 +48,8 @@ public interface StationRepository extends JpaRepository<Station, Long> {
             "+ sin(:userLat * 3.141592653589793 / 180) * sin(s.LAT * 3.141592653589793 / 180))) <= :radius " +
             "ORDER BY distance ASC",
             nativeQuery = true)
-    List<Object[]> selectStationListByLocation(@Param("userLat") Double userLat,
-                                               @Param("userLng") Double userLng,
-                                               @Param("radius") Double radius);
+    List<StationDto> selectStationListByLocation(
+            @Param("userLat") Double userLat,
+            @Param("userLng") Double userLng,
+            @Param("radius") Double radius);
 }
