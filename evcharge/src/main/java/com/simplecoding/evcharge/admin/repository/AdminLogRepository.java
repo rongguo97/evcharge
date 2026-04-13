@@ -11,12 +11,8 @@ import java.util.List;
 public interface AdminLogRepository extends JpaRepository<AdminLog, Long> {
 
     List<AdminLog> findByAdminId(Long adminId);
-
     List<AdminLog> findByAdminEmail(String adminEmail);
-
     List<AdminLog> findByTargetType(String targetType);
-
     List<AdminLog> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
-
     List<AdminLog> findByActionContainingIgnoreCase(String keyword);
 }

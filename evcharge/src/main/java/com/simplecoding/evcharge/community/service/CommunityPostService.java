@@ -19,7 +19,6 @@ public class CommunityPostService {
 
     private final CommunityPostRepository communityPostRepository;
 
-    // 게시글 등록
     @Transactional
     public CommunityPostDto.Response createPost(CommunityPostDto.CreateRequest request) {
         CommunityPost post = CommunityPost.builder()
@@ -29,31 +28,22 @@ public class CommunityPostService {
                 .isNotice(request.getIsNotice() != null ? request.getIsNotice() : "N")
                 .isDeleted("N")
                 .build();
-
         return toResponse(communityPostRepository.save(post));
     }
 
-    // 게시글 전체 조회 (삭제 제외)
     @Transactional(readOnly = true)
     public List<CommunityPostDto.Response> getAllPosts() {
-        return communityPostRepository
-                .findByIsDeletedOrderByInsertTimeDesc("N")
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return communityPostRepository.findByIsDeletedOrderByInsertTimeDesc("N")
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // 공지사항만 조회
     @Transactional(readOnly = true)
     public List<CommunityPostDto.Response> getNoticePosts() {
         return communityPostRepository
                 .findByIsNoticeAndIsDeletedOrderByInsertTimeDesc("Y", "N")
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
-    // 단건 조회
     @Transactional(readOnly = true)
     public CommunityPostDto.Response getPost(Long id) {
         CommunityPost post = communityPostRepository.findById(id)
@@ -61,22 +51,16 @@ public class CommunityPostService {
         return toResponse(post);
     }
 
-    // 게시글 수정
     @Transactional
     public CommunityPostDto.Response updatePost(Long id, CommunityPostDto.UpdateRequest request) {
         CommunityPost post = communityPostRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다: " + id));
-
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
-        if (request.getIsNotice() != null) {
-            post.setIsNotice(request.getIsNotice());
-        }
-
+        if (request.getIsNotice() != null) post.setIsNotice(request.getIsNotice());
         return toResponse(post);
     }
 
-    // 소프트 삭제
     @Transactional
     public void deletePost(Long id) {
         CommunityPost post = communityPostRepository.findById(id)
@@ -84,14 +68,11 @@ public class CommunityPostService {
         post.setIsDeleted("Y");
     }
 
-    // 키워드 검색
     @Transactional(readOnly = true)
     public List<CommunityPostDto.Response> searchPosts(String keyword) {
         return communityPostRepository
                 .findByTitleContainingIgnoreCaseAndIsDeleted(keyword, "N")
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     private CommunityPostDto.Response toResponse(CommunityPost entity) {
