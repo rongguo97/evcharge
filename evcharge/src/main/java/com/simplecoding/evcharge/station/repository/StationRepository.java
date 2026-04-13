@@ -13,24 +13,18 @@ import java.util.List;
 @Repository
 public interface StationRepository extends JpaRepository<Station, Long> {
 
-    // 1. 키워드 전체 조회 (기존 유지)
     @Query(value = "SELECT s FROM Station s " +
-            "WHERE s.stationName LIKE %:searchKeyword% " +
-            "OR s.address LIKE %:searchKeyword%")
-    Page<Station> selectStationList(@Param("searchKeyword") String searchKeyword,
-                                    Pageable pageable);
+            "WHERE (s.stationName LIKE %:searchKeyword% OR s.address LIKE %:searchKeyword%) " +
+            "AND (:status IS NULL OR :status = '' OR s.status = :status) " +
+            "AND (:chargerType IS NULL OR :chargerType = '' OR s.chargerType = :chargerType) " +
+            "AND (:chargerMethod IS NULL OR :chargerMethod = '' OR s.chargerMethod = :chargerMethod)")
+    Page<Station> selectStationList(
+            @Param("searchKeyword") String searchKeyword,
+            @Param("status") String status,
+            @Param("chargerType") String chargerType,
+            @Param("chargerMethod") String chargerMethod,
+            Pageable pageable);
 
-    // 2. 현재 상태별 조회 (필터만 적용)
-    @Query(value = "SELECT s FROM Station s WHERE s.status = :status")
-    Page<Station> selectStationListByStatus(@Param("status") String status, Pageable pageable);
-
-    // 3. 충전기 타입별 조회 (필터만 적용)
-    @Query(value = "SELECT s FROM Station s WHERE s.chargerType = :chargerType")
-    Page<Station> selectStationListByType(@Param("chargerType") String chargerType, Pageable pageable);
-
-    // 4. 충전 방식별 조회 (필터만 적용)
-    @Query(value = "SELECT s FROM Station s WHERE s.chargerMethod = :chargerMethod")
-    Page<Station> selectStationListByMethod(@Param("chargerMethod") String chargerMethod, Pageable pageable);
 
 //    내 위치에서 주변 조회
     // StationRepository.java
