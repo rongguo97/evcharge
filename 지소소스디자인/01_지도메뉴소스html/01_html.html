@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV CHARGING - 전기차 충전 서비스</title>
+    <link rel="stylesheet" href="../002.css/02_main.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">⚡ EV CHARGING</h1>
+            <div class="wifi-icon">📶</div>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="main-container">
+        <!-- 검색 섹션 -->
+        <section class="search-section">
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    class="search-box" 
+                    placeholder="충전소 검색 (지역, 주소, 충전소명)"
+                    aria-label="충전소 검색"
+                >
+                <button class="search-button" name="searchButton" aria-label="검색">🔍</button>
+            </div>
+        </section>
+
+        <!-- 콘텐츠 그리드 -->
+        <div class="content-grid">
+            <!-- 전기충전소 찾기 -->
+            <section class="card charging-card">
+                <h2>전기충전소 찾기</h2>
+                <img src="/home/ubuntu/upload/evpay_card.png" alt="전기충전소 지도" class="card-image">
+                <button class="card-button">충전소 보기</button>
+            </section>
+
+            <!-- 즐겨찾기 -->
+            <section class="card favorites-card">
+                <h2>즐겨찾기</h2>
+                <div class="favorites-list">
+                    <div class="favorite-item">⭐ 강남역 충전소</div>
+                    <div class="favorite-item">⭐ 여의도 충전소</div>
+                    <div class="favorite-item">⭐ 홍대 충전소</div>
+                </div>
+                <button class="card-button">즐겨찾기 관리</button>
+            </section>
+
+            <!-- 페이충전 확인 -->
+            <section class="card evpay-card">
+                <h2>페이충전 확인</h2>
+                <div class="balance-info">
+                    <div class="balance-display">
+                        <span class="label">잔액:</span>
+                        <span class="amount">$128.45</span>
+                    </div>
+                    <div class="range-info">
+                        <span class="label">예상 주행거리:</span>
+                        <span class="range">~230 miles</span>
+                    </div>
+                </div>
+                <button class="card-button">충전 시작</button>
+            </section>
+
+            <!-- QR/NFC -->
+            <section class="card qrnfc-card">
+                <h2>QR/NFC 스캔</h2>
+                <div class="qr-nfc-content">
+                    <div class="qr-placeholder">📱 QR 코드 스캔</div>
+                    <div class="nfc-placeholder">📡 NFC 태그 인식</div>
+                </div>
+                <button class="card-button">스캔 시작</button>
+            </section>
+
+            <!-- 커뮤니티 -->
+            <section class="card community-card">
+                <h2>커뮤니티</h2>
+                <div class="community-content">
+                    <div class="community-post">
+                        <strong>사용자 리뷰</strong>
+                        <p>강남역 충전소는 매우 빠르고 깨끗합니다!</p>
+                    </div>
+                    <div class="community-post">
+                        <strong>팁 공유</strong>
+                        <p>야간 충전 시 할인율이 30% 더 높습니다.</p>
+                    </div>
+                </div>
+                <button class="card-button">커뮤니티 보기</button>
+            </section>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <p>&copy; 2024 EV CHARGING Service. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+
+
