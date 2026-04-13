@@ -149,21 +149,34 @@ public class StationService {
         return struct.toDto(station);
     }
 
-    //  6. 내 위치에서 주변 조회
+    // 6. 내 위치에서 주변 조회
     public List<StationDto> selectStationListByLocation(Double userLat, Double userLng, Double radius) {
+        // 1. 기본 반경 설정
         Double searchRadius = (radius == null) ? 5.0 : radius;
-        List<Object[]> result = stationRepository.selectStationListByLocation(userLat, userLng, searchRadius);
-        return result.stream()
-                .map(objects -> {
-                    // Oracle Native Query 결과: 첫 번째 요소는 엔티티, 두 번째는 거리(BigDecimal일 수 있음)
-                    Station entity = (Station) objects[0];
 
-                    // Oracle은 숫자를 BigDecimal로 던지는 경우가 많으므로 안전하게 변환
-                    Number distNum = (Number) objects[1];
-                    double distance = distNum.doubleValue();
+        // 2. Repository 호출 (리턴 타입을 List<StationDistance>로 변경)
+        List<StationDto> results = stationRepository.selectStationListByLocation(userLat, userLng, searchRadius);
 
-                    StationDto dto = struct.toDto(entity);
-                    dto.setDistance(Math.round(distance * 100) / 100.0);
+        // 3. 인터페이스 결과를 DTO로 변환
+        return results.stream()
+                .map(sd -> {
+                    StationDto dto = new StationDto();
+
+                    // 인터페이스에서 정의한 Getter를 사용해 값을 담습니다.
+                    dto.setStationId(sd.getStationId());
+                    dto.setStationName(sd.getStationName());
+                    dto.setAddress(sd.getAddress());
+                    dto.setLat(sd.getLat());
+                    dto.setLng(sd.getLng());
+                    dto.setStatus(sd.getStatus());
+                    dto.setChargerType(sd.getChargerType());
+                    dto.setChargerMethod(sd.getChargerMethod());
+
+                    // 거리 정보 세팅 (소수점 둘째 자리까지 반올림)
+                    if (sd.getDistance() != null) {
+                        dto.setDistance(Math.round(sd.getDistance() * 100) / 100.0);
+                    }
+
                     return dto;
                 })
                 .collect(Collectors.toList());
