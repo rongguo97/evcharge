@@ -83,10 +83,62 @@ public class StationService {
             }
         }
     }
+    /**
+     * [변환 로직] 프론트의 한글 명칭을 DB 코드로 변환
+     */
+    private String convertLabelToCode(String type, String label) {
+        if (label == null || label.isEmpty() || "전체".equals(label)) return "";
 
+        switch (type) {
+            case "status":
+                if ("충전가능".equals(label)) return "1";
+                if ("충전중".equals(label)) return "2";
+                if ("고장/점검".equals(label)) return "3";
+                if ("통신장애".equals(label)) return "4";
+                if ("통신미연결".equals(label)) return "5";
+                if ("충전종료".equals(label)) return "6";
+                if ("계획정지".equals(label)) return "7";
+                break;
+            case "type":
+                if ("완속".equals(label)) return "1";
+                if ("급속".equals(label)) return "2";
+                break;
+            case "method":
+                if ("B타입(5핀)".equals(label)) return "01";
+                if ("C타입(5핀)".equals(label)) return "02";
+                if ("BC타입(5핀)".equals(label)) return "03";
+                if ("BC타입(7핀)".equals(label)) return "04";
+                if ("DC차데모".equals(label)) return "05";
+                if ("AC3상".equals(label)) return "06";
+                if ("DC콤보".equals(label)) return "07";
+                if ("DC차데모+DC콤보".equals(label)) return "08";
+                break;
+        }
+        return label; // 매칭되는 게 없으면 그대로 반환
+    }
     // 1. 키워드 전체 조회
-    public Page<StationDto> selectStationList(String searchKeyword, Pageable pageable) {
-        Page<Station> page = stationRepository.selectStationList(searchKeyword, pageable);
+    public Page<StationDto> selectStationList(
+            String searchKeyword,
+            String status,
+            String chargerType,
+            String chargerMethod,
+            Pageable pageable) {
+        // 📍 여기서 통역(변환)을 거칩니다.
+        String statusCode = convertLabelToCode("status", status);
+        String typeCode = convertLabelToCode("type", chargerType);
+        String methodCode = convertLabelToCode("method", chargerMethod);
+
+        // 1. 레포지토리의 확장된 메서드를 호출하여 4가지 조건으로 DB 조회
+        Page<Station> page = stationRepository.selectStationList(
+                searchKeyword,
+                statusCode,   // 📍 status 대신 statusCode
+                typeCode,     // 📍 chargerType 대신 typeCode
+                methodCode,
+                pageable
+        );
+
+        // 2. 조회된 Entity 결과를 DTO로 변환하여 반환
+        // (struct::toDto는 기존에 사용하시던 MapStruct 또는 변환 로직을 그대로 유지합니다)
         return page.map(struct::toDto);
     }
 
@@ -95,53 +147,6 @@ public class StationService {
         Station station = stationRepository.findById(stationId)
                 .orElseThrow(() -> new RuntimeException("해당 충전소 정보를 찾을 수 없습니다."));
         return struct.toDto(station);
-    }
-
-    // 3. 현재상태별 조회
-    public Page<StationDto> selectStationListByStatus(String status, Pageable pageable) {
-        String statusValue = switch (status) {
-            case "충전가능" -> "1";
-            case "충전중" -> "2";
-            case "고장", "점검", "고장/점검" -> "3";
-            case "통신장애" -> "4";
-            case "통신미연결" -> "5";
-            case "충전종료" -> "6";
-            case "계획정지" -> "7";
-            default -> status; // 이미 숫자 코드로 들어온 경우나 정의되지 않은 값 처리
-        };
-
-        Page<Station> page = stationRepository.selectStationListByStatus(statusValue, pageable);
-        return page.map(struct::toDto);
-    }
-
-    // 4. 충전 타입별 조회
-    public Page<StationDto> selectStationListByType(String chargerType, Pageable pageable) {
-        String typeValue = switch (chargerType) {
-            case "완속" -> "1";
-            case "급속" -> "2";
-            default -> chargerType;
-        };
-
-        Page<Station> page = stationRepository.selectStationListByType(typeValue, pageable);
-        return page.map(struct::toDto);
-    }
-
-    // 5. 충전 방식별 조회
-    public Page<StationDto> selectStationListByMethod(String method, Pageable pageable) {
-        String methodValue = switch (method) {
-            case "B타입(5핀)" -> "1";
-            case "C타입(5핀)" -> "2";
-            case "BC타입(5핀)" -> "3";
-            case "BC타입(7핀)" -> "4";
-            case "C차 데모", "C차데모" -> "5";
-            case "AC3상" -> "6";
-            case "DC콤보" -> "7";
-            case "DC차데모+DC콤보" -> "8";
-            default -> method;
-        };
-
-        Page<Station> page = stationRepository.selectStationListByMethod(methodValue, pageable);
-        return page.map(struct::toDto);
     }
 
     //  6. 내 위치에서 주변 조회
