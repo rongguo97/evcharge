@@ -36,7 +36,7 @@ public class StationController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String chargerType,
             @RequestParam(required = false) String chargerMethod,
-            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @PageableDefault(size = 100000)  Pageable pageable) {
 
         // 📍 수정된 부분: 파라미터들을 모두 서비스로 넘겨줘야 합니다.
         Page<StationDto> page = stationService.selectStationList(
