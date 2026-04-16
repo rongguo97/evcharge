@@ -1,5 +1,3 @@
-package com.simplecoding.evcharge.reservation.service;
-
 import com.simplecoding.evcharge.payment.service.PaymentService;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
@@ -18,6 +16,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final StationRepository stationRepository;
+    // paymentService와 walletService는 나중에 결제/취소 로직 확장 시 활용하세요.
     private final PaymentService paymentService;
     private final WalletService walletService;
 
@@ -25,22 +24,22 @@ public class ReservationService {
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime) {
         // 1. 충전소 존재 확인
         Station station = stationRepository.findById(stationId)
-                .orElseThrow(() -> new RuntimeException("충전소를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소 ID입니다: " + stationId));
 
-        // 2. 이용 시간 계산 (메서드 내용 보완)
+        // 2. 이용 시간 계산 (버퍼 타임 포함)
         int durationMinutes = calculateDuration(station.getChargerType());
-        LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10); // 버퍼 10분
+        LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10);
 
-        // 3. 중복 예약 체크 (Repository 메서드와 stationId 매칭 확인 필요)
+        // 3. 중복 예약 체크
         if (!reservationRepository.findOverlapping(stationId, startTime, endTime).isEmpty()) {
-            throw new RuntimeException("이미 해당 시간에 예약이 존재합니다.");
+            throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
         }
 
-        // 4. 결제 로직 연동 (필요 시 주석 해제)
-        // walletService에 subtractPoint(String email, Long amount) 메서드가 있다면 사용 가능
+        // 4. 포인트 차감 (비즈니스 정책에 따라 추가)
+        // 예: 기본 예약금 5,000원 선결제 로직이 필요하다면 여기서 호출
         // walletService.subtractPoint(email, 5000L);
 
-        // 5. 예약 저장 (Lombok Builder 사용)
+        // 5. 예약 저장
         Reservation reservation = Reservation.builder()
                 .email(email)
                 .station(station)
@@ -53,17 +52,22 @@ public class ReservationService {
     }
 
     /**
-     * 충전기 타입에 따른 이용 시간 계산 로직 보완
+     * 충전기 타입에 따른 이용 시간 계산 (안정성 강화)
      */
     private int calculateDuration(String chargerType) {
-        if (chargerType == null) return 60; // 기본값
+        if (chargerType == null || chargerType.isEmpty()) return 60;
 
-        if (chargerType.contains("급속") || chargerType.contains("100kW")) {
-            return 40; // 급속은 보통 40분
-        } else if (chargerType.contains("50kW")) {
-            return 70; // 50kW는 70분
-        } else {
-            return 60; // 완속 및 기타 60분
+        // 대소문자 무시 및 공백 제거 후 비교
+        String type = chargerType.toUpperCase().replace(" ", "");
+
+        if (type.contains("100KW") || type.contains("급속")) {
+            return 40;
+        } else if (type.contains("50KW")) {
+            return 70;
+        } else if (type.contains("완속") || type.contains("7KW")) {
+            return 240; // 완속은 보통 시간이 훨씬 오래 걸리므로 4시간 등으로 설정 가능
         }
+
+        return 60; // 기본값
     }
 }
