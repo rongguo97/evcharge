@@ -1,3 +1,5 @@
+package com.simplecoding.evcharge.reservation.service;
+
 import com.simplecoding.evcharge.payment.service.PaymentService;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
