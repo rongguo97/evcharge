@@ -25,7 +25,6 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .email(member.getEmail())  // [수정] .member(member) -> .email(member.getEmail())
                 .amount(amount)
-                .method(payMethod)
                 .paymentType("CHARGE")
                 .reservationId(null)
                 .build();

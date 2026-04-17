@@ -6,6 +6,7 @@ import com.simplecoding.evcharge.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // 📍 로그를 위해 추가
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+@Slf4j // 📍 로그 어노테이션 추가
 @Tag(name = "Reservation Controller", description = "예약 관련 API")
 @RestController
 @RequestMapping("/api/reservation")
@@ -29,14 +31,18 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<Long>> addReservation(
             @RequestParam String email,
             @RequestParam Long stationId,
-            // 1. ISO 포맷을 사용하면 리액트 등 프론트엔드와 통신 시 더 유연합니다.
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime) {
 
-        // 2. 서비스 호출 시 발생할 수 있는 예외를 대비한 처리 (선택사항, GlobalExceptionHandler가 있다면 생략 가능)
+        // 📍 데이터가 컨트롤러 입구까지 잘 들어오는지 확인용 (가장 먼저 찍힘)
+        System.out.println("======= [예약 요청 발생] =======");
+        System.out.println("Email: " + email);
+        System.out.println("StationId: " + stationId);
+        System.out.println("StartTime: " + startTime);
+        System.out.println("===============================");
+
         try {
             Reservation res = reservationService.createReservation(email, stationId, startTime);
 
-            // 3. HTTP 상태 코드를 201 Created로 반환하는 것이 RESTful 규약에 더 가깝습니다.
             return new ResponseEntity<>(new ApiResponse<>(
                     true,
                     "예약이 성공적으로 완료되었습니다.",
@@ -46,18 +52,24 @@ public class ReservationController {
             ), HttpStatus.CREATED);
 
         } catch (IllegalStateException e) {
-            // 중복 예약 등 비즈니스 로직 에러 처리
+            // 📍 비즈니스 로직 에러 (중복 예약 등) 콘솔에 출력
+            System.err.println("!!! [비즈니스 로직 에러] : " + e.getMessage());
             return new ResponseEntity<>(new ApiResponse<>(
                     false,
                     e.getMessage(),
                     null,
                     0,
                     0
-            ), HttpStatus.CONFLICT); // 409 Conflict
+            ), HttpStatus.CONFLICT);
+
         } catch (Exception e) {
+            // 📍 500 에러의 진짜 원인을 콘솔에 '빨간 글씨'로 쏟아냅니다.
+            System.err.println("!!! [서버 내부 오류 발생] - 아래 StackTrace를 확인하세요 !!!");
+            e.printStackTrace(); // 📍 이게 핵심입니다. 에러의 근원지를 알려줍니다.
+
             return new ResponseEntity<>(new ApiResponse<>(
                     false,
-                    "예약 중 서버 오류가 발생했습니다.",
+                    "예약 중 서버 오류가 발생했습니다: " + e.getMessage(),
                     null,
                     0,
                     0

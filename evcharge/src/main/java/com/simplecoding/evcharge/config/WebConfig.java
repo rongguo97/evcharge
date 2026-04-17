@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class    WebConfig implements WebMvcConfigurer {
     @Value("${spring.react.ip}")
     String reactIp;
 
@@ -17,7 +17,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
 //                아래 url 허용
 //          사용법 : .allowedOrigins("http://허용할IP:허용할Port", ...)
-                .allowedOrigins(reactIp)
+                .allowedOrigins("http://localhost:5173")
+
 //                Todo: 아래 추가해야 update, delete, insert, select 가 cors 문제가 안생김
                 .allowedMethods(
                         HttpMethod.GET.name(),
@@ -25,7 +26,9 @@ public class WebConfig implements WebMvcConfigurer {
                         HttpMethod.PUT.name(),
                         HttpMethod.DELETE.name(),
                         HttpMethod.PATCH.name()
-                );
+                        )
+                .allowedHeaders("*")
+                .allowCredentials(true); // 📍 브라우저가 요구하는 'true' 설정!
 //        TODO: 벡엔드 옵션 추가 필요: httpOnly 쿠키 허용 옵션
     }
 }

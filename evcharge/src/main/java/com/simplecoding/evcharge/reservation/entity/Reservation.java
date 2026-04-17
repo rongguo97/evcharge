@@ -29,6 +29,8 @@ public class Reservation {
     @JoinColumn(name = "STATION_ID", nullable = false)
     private Station station;
 
+
+
     @Column(name = "START_TIME", nullable = false)
     private LocalDateTime startTime;
 

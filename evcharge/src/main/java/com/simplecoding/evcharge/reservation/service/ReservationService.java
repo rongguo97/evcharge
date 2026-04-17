@@ -67,7 +67,7 @@ public class ReservationService {
         } else if (type.contains("50KW")) {
             return 70;
         } else if (type.contains("완속") || type.contains("7KW")) {
-            return 240; // 완속은 보통 시간이 훨씬 오래 걸리므로 4시간 등으로 설정 가능
+            return 60; // 완속은 보통 시간이 훨씬 오래 걸리므로 4시간 등으로 설정 가능
         }
 
         return 60; // 기본값
