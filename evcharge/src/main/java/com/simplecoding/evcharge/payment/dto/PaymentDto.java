@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 public class PaymentDto {
     private Long payId;            // id -> payId (선택사항이나 일관성을 위해 추천)
     private Long amount;
-    private String method;         // payMethod -> method 로 변경
     private String paymentType;    // 신규 추가: CHARGE / USE
     private Long reservationId;    // 신규 추가
     private String email;
