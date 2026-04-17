@@ -1,6 +1,5 @@
 package com.simplecoding.evcharge.payment.service;
 
-import com.simplecoding.evcharge.member.entity.Member;
 import com.simplecoding.evcharge.payment.entity.Payment;
 import com.simplecoding.evcharge.payment.repository.PaymentRepository;
 import com.simplecoding.evcharge.wallet.service.WalletService;
@@ -16,23 +15,38 @@ public class PaymentService {
     private final WalletService walletService;
 
     /**
-     * 포인트 충전 처리
+     * 적립금 충전 처리 (외부 결제 완료 후 호출)
      */
     @Transactional
-    public void chargePointWithHistory(Member member, Long amount, String payMethod) {
+    public void chargeReserveFundWithHistory(String email, Long amount) {
 
-        // 1. 결제 기록 생성 (수정된 부분: member 객체 대신 email 문자열을 넣음)
+        // 1. 실제 지갑 데이터 업데이트 (WalletService 호출)
+        // 💡 내부적으로 적립금 증가 + 10% 포인트 적립이 동시에 일어납니다.
+        walletService.chargeReserveFund(email, amount);
+
+        // 2. 결제 기록 생성 및 저장
         Payment payment = Payment.builder()
-                .email(member.getEmail())  // [수정] .member(member) -> .email(member.getEmail())
+                .email(email)
                 .amount(amount)
-                .paymentType("CHARGE")
-                .reservationId(null)
+
+                // .method(payMethod) // 요구사항에 따라 삭제됨
+                .paymentType("TOPUP") // 'CHARGE' 보다 'TOPUP'(충전)이 더 명확.
+                .reservation(null)    // 충전 시에는 연결된 예약이 없음
+
+    }
+
+    /**
+     * 예약 결제 내역 저장 (ReservationService에서 호출용)
+     */
+    @Transactional
+    public void saveUsageHistory(String email, Long amount, com.simplecoding.evcharge.reservation.entity.Reservation reservation) {
+        Payment payment = Payment.builder()
+                .email(email)
+                .amount(amount)
+                .paymentType("RESERVE_USAGE") // 적립금 사용을 통한 예약
+                .reservation(reservation)      // 어떤 예약에 쓴 건지 연결
                 .build();
 
         paymentRepository.save(payment);
-
-        // 2. 실제 지갑 포인트 증가
-        // walletService 내부에서도 Member 객체에서 email을 뽑아 쓰도록 수정.
-        walletService.chargePoint(member, amount);
     }
 }

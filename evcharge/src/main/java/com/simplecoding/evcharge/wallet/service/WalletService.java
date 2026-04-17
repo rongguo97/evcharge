@@ -1,6 +1,5 @@
 package com.simplecoding.evcharge.wallet.service;
 
-import com.simplecoding.evcharge.member.entity.Member;
 import com.simplecoding.evcharge.wallet.entity.Wallet;
 import com.simplecoding.evcharge.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,30 +13,55 @@ public class WalletService {
     private final WalletRepository walletRepository;
 
     /**
-     * 특정 회원의 지갑 정보 가져오기
-     * 만약 지갑이 없다면 새로 만들어서 저장함 (최초 1회)
+     * 특정 회원의 지갑 정보 가져오기 (이메일 기준)
      */
     @Transactional
-    public Wallet getOrCreateWallet(Member member) {
-        // 1. [수정] 메서드명을 findByEmail로 변경하고 이메일 문자열을 전달합니다.
-        return walletRepository.findByEmail(member.getEmail())
+    public Wallet getOrCreateWallet(String email) {
+        return walletRepository.findByEmail(email)
                 .orElseGet(() -> {
-                    // 2. [수정] new Wallet(member) 대신 빌더를 사용하여 email을 넣어줍니다.
                     Wallet newWallet = Wallet.builder()
-                            .email(member.getEmail())
-                            .point(0L) // 초기 포인트 0
+                            .email(email)
+                            .reserveFund(0L) // 적립금 초기화
+                            .point(0L)       // 포인트 초기화
                             .build();
                     return walletRepository.save(newWallet);
                 });
     }
 
     /**
-     * 포인트 충전 로직
+     * 적립금 충전 (외부 결제 TOPUP)
+     * 결제 금액의 10%를 포인트로 적립하는 로직 포함
      */
     @Transactional
-    public void chargePoint(Member member, Long amount) {
-        Wallet wallet = getOrCreateWallet(member);
-        wallet.addPoint(amount);
-        // Dirty Checking으로 인해 별도의 save 호출 없이 반영됩니다.
+    public void chargeReserveFund(String email, Long amount) {
+        if (amount == null || amount <= 0) throw new IllegalArgumentException("충전 금액이 올바르지 않습니다.");
+
+        Wallet wallet = getOrCreateWallet(email);
+
+        // 1. 적립금 충전
+        wallet.addReserveFund(amount);
+
+        // 2. 결제 금액의 10% 포인트 적립 (요구사항 반영)
+        wallet.earnPoint(amount);
+
+        // Dirty Checking으로 자동 저장됩니다.
+    }
+
+    /**
+     * 적립금 사용 (예약 시 RESERVE_USAGE)
+     */
+    @Transactional
+    public void spendReserveFund(String email, Long amount) {
+        Wallet wallet = getOrCreateWallet(email);
+        wallet.subtractReserveFund(amount);
+    }
+
+    /**
+     * 포인트를 적립금으로 전환
+     */
+    @Transactional
+    public void convertPointToFund(String email, Long amount) {
+        Wallet wallet = getOrCreateWallet(email);
+        wallet.convertPointToReserveFund(amount);
     }
 }

@@ -5,34 +5,64 @@ import lombok.*;
 
 @Entity
 @Table(name = "TB_WALLET")
-@Getter @Setter // 💡 MapStruct 연동을 위해 Setter 추가 제안
-@NoArgsConstructor @AllArgsConstructor @Builder // 💡 생성자 및 빌더 추가
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Wallet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "wallet_seq")
     @SequenceGenerator(name = "wallet_seq", sequenceName = "SQ_WALLET", allocationSize = 1)
-    @Column(name = "WALLET_ID") //
-    private Long walletId; // 💡 변수명을 ERD와 맞춰 walletId로 추천
+    @Column(name = "WALLET_ID")
+    private Long walletId;
 
-    @Column(name = "POINT") //
+    // 1. 적립금 (실제 예약 시 차감되는 금액)
+    @Builder.Default
+    @Column(name = "RESERVE_FUND", nullable = false)
+    private Long reserveFund = 0L;
+
+    // 2. 포인트 (결제 시 10% 쌓이는 보너스)
+    @Builder.Default
+    @Column(name = "POINT", nullable = false)
     private Long point = 0L;
 
-    @Column(name = "EMAIL") // 💡 ERD에 명시된 EMAIL 컬럼 직접 매핑
+    @Column(name = "EMAIL", nullable = false, length = 100)
     private String email;
-
-    private Long reserveFund;
-
-    // 포인트 충전 및 사용 로직은 그대로 유지하시면 됩니다.
-    public void addPoint(Long amount) {
-        if (this.point == null) this.point = 0L;
-        this.point += amount;
+    /**
+     * 적립금 충전 (외부 결제 등을 통해 충전할 때)
+     */
+    public void addReserveFund(Long amount) {
+        if (amount == null || amount <= 0) return;
+        this.reserveFund += amount;
     }
 
-    public void subtractPoint(Long amount) {
-        if (this.point < amount) {
-            throw new RuntimeException("잔액이 부족합니다.");
+    /**
+     * 적립금 사용 (실제 예약 시 차감)
+     */
+    public void subtractReserveFund(Long amount) {
+        if (this.reserveFund < amount) {
+            throw new RuntimeException("적립금이 부족합니다. 충전 후 이용해주세요.");
         }
-        this.point -= amount;
+        this.reserveFund -= amount;
+    }
+
+    /**
+     * 포인트 적립 (결제 성공 시 결제 금액의 10%를 쌓을 때 사용)
+     */
+    public void earnPoint(Long paymentAmount) {
+        if (paymentAmount == null || paymentAmount <= 0) return;
+        // 결제 금액의 10% 계산
+        long bonus = (long) (paymentAmount * 0.1);
+        this.point += bonus;
+    }
+
+    /**
+     * 포인트를 적립금으로 전환 (포인트 -> 적립금 결제 사용)
+     */
+    public void convertPointToReserveFund(Long amount) {
+        if (this.point < amount) {
+            throw new RuntimeException("전환할 포인트가 부족합니다.");
+        }
+        this.point -= amount;      // 포인트 차감
+        this.reserveFund += amount; // 적립금 증가
     }
 }
