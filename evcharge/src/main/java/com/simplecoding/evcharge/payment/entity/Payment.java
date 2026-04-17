@@ -29,10 +29,7 @@ public class Payment {
 
     @Column(name = "AMOUNT", nullable = false) //
     private Long amount;
-
-    @Column(name = "METHOD") //
-    private String method; // 예: 'POINT'
-
+    
     @Column(name = "CREATED_AT") //
     private LocalDateTime createdAt;
 
