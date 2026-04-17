@@ -21,6 +21,8 @@ public class Wallet {
     @Column(name = "EMAIL") // 💡 ERD에 명시된 EMAIL 컬럼 직접 매핑
     private String email;
 
+    private Long reserveFund;
+
     // 포인트 충전 및 사용 로직은 그대로 유지하시면 됩니다.
     public void addPoint(Long amount) {
         if (this.point == null) this.point = 0L;

@@ -27,7 +27,7 @@ public class StationController {
     private final StationService stationService;
 
     // 1. 키워드 전체 조회
-    @Operation(summary = "충전소 전체 조회", description = "키워드로 충전소 목록을 페이징 조회합니다.")
+    @Operation(summary = "충전소 전체 조회", description = "키워드로 충전소 목록을 전체조회합니다.")
     // StationController.java
 
     @GetMapping("/station")
@@ -54,7 +54,7 @@ public class StationController {
     }
 
     // 2. 단일상세조회
-    @Operation(summary = "충전소 상세 조회", description = "ID를 이용해 특정 충전소 정보를 조회합니다.")
+    @Operation(summary = "충전소 상세 조회", description = "충전소를 한 개씩 상세 조회합니다.")
     @GetMapping("/station/{stationId}")
     public ResponseEntity<ApiResponse<StationDto>> findById(
             @Parameter(description = "충전소 ID") @PathVariable long stationId) {
@@ -67,7 +67,7 @@ public class StationController {
 
 
     // 6. 내 위치에서 주변 조회
-    @Operation(summary = "내 주변 조회 (리스트)", description = "내 위치 기준 반경 내 충전소를 거리순 리스트로 반환합니다.")
+    @Operation(summary = "내 주변 조회", description = "내 위치 반경 내 충전소를 거리순으로 조회합니다..")
     @GetMapping("/station/nearby")
     public ResponseEntity<ApiResponse<List<StationDto>>> selectStationListByLocation(
             @RequestParam Double userLat,
