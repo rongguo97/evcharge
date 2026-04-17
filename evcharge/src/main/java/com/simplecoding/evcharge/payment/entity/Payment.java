@@ -35,8 +35,12 @@ public class Payment {
 
     @Column(name = "AMOUNT", nullable = false)
     private Long amount;
+<<<<<<< HEAD
 
     // [삭제] private String method; (요구사항에 따라 삭제)
+=======
+    // 💡 [삭제] private String method; (요구사항에 따라 삭제)
+>>>>>>> bda2e4b670894e6c0e63a040e8205890a29ed61a
 
     @Column(name = "CREATED_AT", nullable = false, updatable = false)
     private LocalDateTime createdAt;

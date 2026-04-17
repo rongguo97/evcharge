@@ -27,7 +27,6 @@ public class Wallet {
 
     @Column(name = "EMAIL", nullable = false, length = 100)
     private String email;
-
     /**
      * 적립금 충전 (외부 결제 등을 통해 충전할 때)
      */
