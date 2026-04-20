@@ -24,7 +24,7 @@ public class ReservationService extends BaseTimeEntity {
     private final StationRepository stationRepository;
     private final ReservationRepository repository;
     private final MapStruct mapper;
-
+    
 
     public Page<ReservationDto> getReservationList(String email,
                                                    Status status,
@@ -120,24 +120,24 @@ public class ReservationService extends BaseTimeEntity {
         }
     }
 
-    public Object calculateFee(Long id) {
-
-        Reservation reservation = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("예약 없음"));
-
-        LocalDateTime start = reservation.getStartTime();
-        LocalDateTime end = reservation.getEndTime() != null
-                ? reservation.getEndTime()
-                : LocalDateTime.now();
-
-        long minutes = java.time.Duration.between(start, end).toMinutes();
-
-        int baseFee = (int) minutes * 100; // 예: 1분 = 100원
-
-        int overstayFee = reservation.getOverstayFee();
-
-        return new FeeResult(minutes, baseFee, overstayFee);
-    }
+//    public Object calculateFee(Long id) {
+//
+//        Reservation reservation = repository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("예약 없음"));
+//
+//        LocalDateTime start = reservation.getStartTime();
+//        LocalDateTime end = reservation.getEndTime() != null
+//                ? reservation.getEndTime()
+//                : LocalDateTime.now();
+//
+//        long minutes = java.time.Duration.between(start, end).toMinutes();
+//
+//        int baseFee = (int) minutes * 100; // 예: 1분 = 100원
+//
+//        int overstayFee = reservation.getOverstayFee();
+//
+//        return new FeeResult(minutes, baseFee, overstayFee);
+//    }
 
     @Transactional
     public void pay(Long id, Object paymentRequest) {
@@ -148,7 +148,10 @@ public class ReservationService extends BaseTimeEntity {
         if (reservation.getStatus() == Status.CANCELLED) {
             throw new RuntimeException("취소된 예약은 결제 불가");
         }
-
+        if (reservation.getStatus() != Status.COMPLETED &&
+                reservation.getStatus() != Status.OVERSTAY) {
+            throw new RuntimeException("결제 가능한 상태가 아닙니다.");
+        }
         // 결제 성공 가정
         reservation.setStatus(Status.COMPLETED);
     }}
@@ -181,8 +184,8 @@ public class ReservationService extends BaseTimeEntity {
 
 //8. 후처리
 //   - 알림
-// -예약 전
-// 오버차지
+      // -예약 전
+    // 오버차지
 //   - 로그 저장
 
 //예약 생성
