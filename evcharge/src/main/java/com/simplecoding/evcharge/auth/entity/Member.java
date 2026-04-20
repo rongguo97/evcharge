@@ -14,9 +14,31 @@ import lombok.*;
 @EqualsAndHashCode(of = "email", callSuper = false)
 public class Member extends BaseTimeEntity {
     //    @Id : jakarta ~ 폴더 선택
-    @Id                                  // 기본키임을 알려주는 어노테이션
-    private String email;                // 기본키
+    @Id
+    @Column(name = "EMAIL") // 컬럼명 명시
+    private String email;
+
+    @Column(name = "PASSWORD", nullable = false)
     private String password;
-    private String name;
-    private String codeName="ROLE_USER"; // 권한명(ROLE_USER(기본), ROLE_ADMIN)
+
+    private String memberCode;
+
+    // 1. DB에는 MEMBER_NAME으로 되어 있으므로 매핑
+    @Column(name = "MEMBER_NAME")
+    private String memberName;
+
+    // 2. DB에는 ROLE로 되어 있으므로 매핑
+    @Column(name = "ROLE")
+    private String role = "ROLE_USER";
+
+    // 3. 전기차 서비스라면 차량 번호 추가
+    @Column(name = "CAR_NUMBER")
+    private String carNumber;
+
+    // (선택) 전화번호나 삭제 여부도 ERD에 있으므로 추가
+    @Column(name = "PHONE_NUMBER")
+    private String phoneNumber;
+
+    @Column(name = "IS_DELETED")
+    private String isDeleted = "N";
 }

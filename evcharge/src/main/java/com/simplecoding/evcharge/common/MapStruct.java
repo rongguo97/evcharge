@@ -3,10 +3,10 @@ package com.simplecoding.evcharge.common;
 
 
 
+import com.simplecoding.evcharge.auth.dto.MemberDto;
+import com.simplecoding.evcharge.auth.entity.Member;
 import com.simplecoding.evcharge.station.dto.StationDto;
 import com.simplecoding.evcharge.station.entity.Station;
-import com.simplecoding.evcharge.member.dto.MemberDto;
-import com.simplecoding.evcharge.member.entity.Member;
 
 import org.mapstruct.*;
 
@@ -27,7 +27,6 @@ public interface MapStruct {
 //    pk는 절대 안바뀜
     @Mapping(target = "email", ignore = true) // PK는 수정 불가
 //  가입일은 못바꿈
-    @Mapping(target = "insertTime", ignore = true) // 등록일 유지
 //  DTO ->ENTITY
     void updateFromDto(MemberDto dto, @MappingTarget Member entity);
 //    요약:이메일과 가입일은 건드리지 말고, 리액트에서 보내준 값들 중에서 비어있지 않은(Not Null) 값들만 골라서 기존 회원 정보를 업데이트해라

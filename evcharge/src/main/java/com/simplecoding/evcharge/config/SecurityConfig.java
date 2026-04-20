@@ -1,6 +1,7 @@
 package com.simplecoding.evcharge.config;
 // 목적: 시큐리티(인증/권한) 설정 파일, 346페이지 참고
 
+import com.simplecoding.evcharge.common.jwt.AuthTokenFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,10 +25,10 @@ public class SecurityConfig {
     }
 
 // 2) 웹토큰 자동 검사 필터: AuthTokenFilter
-//    @Bean                                      // IOC
-//    public AuthTokenFilter JwtTokenFilter() {
-//        return new AuthTokenFilter();
-//    }
+    @Bean                                      // IOC
+    public AuthTokenFilter JwtTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
 // 3) 인증/권한 설정: 로그인과 권한 설정은 여기서 하세요
     @Bean
@@ -54,7 +55,7 @@ public class SecurityConfig {
 //      4) 웹토큰 검사 필터 자동 실행
 //        참고) 사용법) http.addFilterBefore(웹토큰필터, id검사필터); // id검사 필터 앞에 웹토큰필터를 넣으시오
 //        용어: 시큐리티: Authentication == UserDetails == principal (사용자계정을 담는 클래스들)
-//        http.addFilterBefore(JwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(JwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();                                                              // 위의 설정 실행 끝
     }
