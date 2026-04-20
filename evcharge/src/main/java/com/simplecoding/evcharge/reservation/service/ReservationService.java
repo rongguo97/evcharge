@@ -59,17 +59,22 @@ public class ReservationService {
     private int calculateDuration(String chargerType) {
         if (chargerType == null || chargerType.isEmpty()) return 60;
 
-        // 대소문자 무시 및 공백 제거 후 비교
-        String type = chargerType.toUpperCase().replace(" ", "");
+        String type = chargerType.trim();
 
-        if (type.contains("100KW") || type.contains("급속")) {
-            return 40;
-        } else if (type.contains("50KW")) {
-            return 70;
-        } else if (type.contains("완속") || type.contains("7KW")) {
-            return 60; // 완속은 보통 시간이 훨씬 오래 걸리므로 4시간 등으로 설정 가능
+        // 📍 보내주신 case "type" 로직을 그대로 반영합니다.
+        switch (type) {
+            case "2": // 급속
+                return 40; // ⚡ 급속은 짧게 (40분)
+
+            case "1": // 완속
+                return 60; // 🐌 완속은 길게 (4시간 - 필요시 60~120분으로 조절)
+
+            default:
+                // 만약 "01"~"08" 같은 상세 method 코드가 들어올 경우를 대비
+                if (type.equals("05") || type.equals("06") || type.equals("07") || type.equals("08")) {
+                    return 40; // 급속 계열 커넥터들
+                }
+                return 60; // 기본값
         }
-
-        return 60; // 기본값
     }
 }
