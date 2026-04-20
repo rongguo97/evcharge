@@ -7,7 +7,6 @@ import com.simplecoding.evcharge.auth.dto.MemberDto;
 import com.simplecoding.evcharge.auth.entity.Member;
 import com.simplecoding.evcharge.station.dto.StationDto;
 import com.simplecoding.evcharge.station.entity.Station;
-
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring",                                                  // 플로그인을 spring 에 사용한다는 의미
