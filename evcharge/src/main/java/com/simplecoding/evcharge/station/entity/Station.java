@@ -1,46 +1,61 @@
 package com.simplecoding.evcharge.station.entity;
 
-import com.simplecoding.evcharge.charger.entity.Charger;
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "TB_STATION")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "charger")
+@NoArgsConstructor
+@Builder // 빌더 패턴을 쓰면 데이터 저장 시 편리합니다.
+@ToString
+@EqualsAndHashCode
+// 1. 시퀀스 제너레이터 설정 (DB의 SEQ_STATION_ID와 연결)
 @SequenceGenerator(
-        name = "SQ_STATION_JPA",      // JPA 시퀀스 이름
-        sequenceName = "SQ_STATION",  // DB 시퀀스 이름
+        name = "STATION_SEQ_GEN",
+        sequenceName = "SEQ_STATION_ID", // 사진 속 SEQUENCE_NAME과 일치 시킴
         initialValue = 1,
         allocationSize = 1
 )
-@EqualsAndHashCode(of = "stationId", callSuper = false)
 public class Station {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long stationId; // 충전소 고유 번호 (PK)
+        @Id
+        // 2. 전략을 SEQUENCE로 변경하고 위에서 만든 제너레이터 연결
+        @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "STATION_SEQ_GEN")
+        @Column(name = "STATION_ID")
+        private Long stationId;
 
-    @Column(nullable = false)
-    private String stationName; // 충전소 이름
+        @Column(name = "CHARGER_ID")
+        private Long chargerId;
 
-    private String address; // 상세 주소
+        @Column(name = "ADDRESS", length = 255)
+        private String address;
 
-    @Column(precision = 10, scale = 8)    //전체 숫자개수(소수점 포함 10개까지 허용)
-    private BigDecimal lat; // 위도 (지도 표시용)
+        @Column(name = "STATION_NAME", length = 100)
+        private String stationName;
 
-    @Column(precision = 11, scale = 8)    //그 10개중 소수점 아래에 8개만 배정하겠다
-    private BigDecimal lng; // 경도 (지도 표시용)
+        @Column(name = "CHARGER_NAME", length = 100)
+        private String chargerName;
 
-    private String isDeleted = "N"; // 폐쇄 여부
+        @Column(name = "CHARGER_TYPE", length = 100)
+        private String chargerType;
 
-    // [중요] 한 충전소는 여러 개의 충전기를 가짐 (1:N 관계)
-    @OneToMany(mappedBy = "station", cascade = CascadeType.ALL)
-    private List<Charger> chargers = new ArrayList<>();
+        @Column(name = "STATUS", length = 100)
+        private String status;
+
+        @Column(name = "CHARGER_METHOD", length = 100)
+        private String chargerMethod;
+
+        @Column(name = "LAT")
+        private Double lat;
+
+        @Column(name = "LNG")
+        private Double lng;
+
+        // ERD와 대소문자까지 동일하게 맞춤
+        @Column(name = "statUpdateDatetime")
+        private LocalDateTime statUpdateDatetime;
 }

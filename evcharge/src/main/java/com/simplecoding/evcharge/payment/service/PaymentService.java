@@ -1,6 +1,5 @@
 package com.simplecoding.evcharge.payment.service;
 
-import com.simplecoding.evcharge.member.entity.Member;
 import com.simplecoding.evcharge.payment.entity.Payment;
 import com.simplecoding.evcharge.payment.repository.PaymentRepository;
 import com.simplecoding.evcharge.wallet.service.WalletService;
@@ -13,27 +12,45 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final WalletService walletService; // 중요: 지갑 서비스와 협업함.
+    private final WalletService walletService;
 
     /**
-     * 포인트 충전 결제 처리
-     * 1. 결제 내역(Payment)을 저장한다.
-     * 2. 회원의 지갑(Wallet) 포인트를 업데이트한다.
+     * 적립금 충전 처리 (외부 결제 완료 후 호출)
      */
-    @Transactional // 중요: 두 작업 중 하나라도 실패하면 모두 취소(Rollback)됨.
-    public void processPayment(Member member, Long amount, String payMethod) {
+    @Transactional
+    public void chargeReserveFundWithHistory(String email, Long amount) {
 
-        // 1. 결제 기록 생성 및 저장
+        // 1. 실제 지갑 데이터 업데이트 (WalletService 호출)
+        // 💡 내부적으로 적립금 증가 + 10% 포인트 적립이 동시에 일어납니다.
+        walletService.chargeReserveFund(email, amount);
+
+        // 2. 결제 기록 생성 및 저장
         Payment payment = Payment.builder()
+                .email(email)
                 .amount(amount)
-                .payMethod(payMethod)
-                .status("DONE") // 일단 성공으로 가정
-                .member(member)
+
+                // .method(payMethod) // 요구사항에 따라 삭제됨
+                .paymentType("TOPUP") // 'CHARGE' 보다 'TOPUP'(충전)이 더 명확.
+                .reservation(null)
                 .build();
 
         paymentRepository.save(payment);
+    }// 충전 시에는 연결된 예약이 없음
 
-        // 2. 지갑 서비스에 충전 요청 (이전에 만든 메서드 활용)
-        walletService.chargePoint(member, amount);
+
+
+    /**
+     * 예약 결제 내역 저장 (ReservationService에서 호출용)
+     */
+    @Transactional
+    public void saveUsageHistory(String email, Long amount, com.simplecoding.evcharge.reservation.entity.Reservation reservation) {
+        Payment payment = Payment.builder()
+                .email(email)
+                .amount(amount)
+                .paymentType("RESERVE_USAGE") // 적립금 사용을 통한 예약
+                .reservation(reservation)      // 어떤 예약에 쓴 건지 연결
+                .build();
+
+        paymentRepository.save(payment);
     }
 }

@@ -50,7 +50,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 //	TODO: Swagger, API 코딩에 대한 자동 문서 작성을 해주는 플로그인
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
-
+//    공공데이터 가져오기 플러그인(전기차 데이터)
+	implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+	implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
 }
 
 tasks.named('test') {

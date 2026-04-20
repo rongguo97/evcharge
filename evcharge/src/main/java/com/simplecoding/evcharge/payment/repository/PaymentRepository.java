@@ -9,7 +9,10 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // 특정 회원의 결제 내역을 최신순으로 모두 가져오는 기능 추가
-    // findBy + Member(필드명) + Email(그 안의 필드명) + OrderBy + InsertTime + Desc
-    List<Payment> findByMemberEmailOrderByInsertTimeDesc(String email);
+    // insertTime -> createdAt 으로 필드명이 바뀌었다면 메서드명도 수정!
+    // 회원별 결제 내역을 최신순으로 조회
+    List<Payment> findByEmailOrderByCreatedAtDesc(String email);
+
+    // 특정 예약 번호에 해당하는 결제 내역 찾기 (신규 추가된 기능)
+    List<Payment> findByReservationId(Long reservationId);
 }
