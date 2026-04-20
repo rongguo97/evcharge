@@ -1,80 +1,207 @@
 package com.simplecoding.evcharge.reservation.service;
 
-import com.simplecoding.evcharge.payment.service.PaymentService;
+import com.simplecoding.evcharge.common.BaseTimeEntity;
+import com.simplecoding.evcharge.reservation.dto.FeeResult;
+import com.simplecoding.evcharge.reservation.dto.ReservationDto;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
+import com.simplecoding.evcharge.reservation.entity.Status;
 import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
+import com.simplecoding.evcharge.common.MapStruct;
 import com.simplecoding.evcharge.station.entity.Station;
 import com.simplecoding.evcharge.station.repository.StationRepository;
-import com.simplecoding.evcharge.wallet.service.WalletService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class ReservationService {
-
-    private final ReservationRepository reservationRepository;
+public class ReservationService extends BaseTimeEntity {
     private final StationRepository stationRepository;
-    // paymentService와 walletService는 나중에 결제/취소 로직 확장 시 활용하세요.
-    private final PaymentService paymentService;
-    private final WalletService walletService;
+    private final ReservationRepository repository;
+    private final MapStruct mapper;
+    
+
+    public Page<ReservationDto> getReservationList(String email,
+                                                   Status status,
+                                                   Pageable pageable) {
+
+        return repository.findReservationList(email, status, pageable);
+    }
+    @Transactional
+    public void createReservation(ReservationDto dto) {
+
+        // 1. 중복 예약 체크
+        boolean isOverlap = repository.existsOverlapReservation(
+                dto.getStationId(),
+                dto.getStartTime(),
+                dto.getEndTime()
+        );
+
+        if (isOverlap) {
+            throw new RuntimeException("이미 예약된 시간입니다.");
+        }
+
+        // 2. Entity 변환
+        Reservation reservation = mapper.toEntity(dto);
+        Station station = stationRepository.findById(dto.getStationId())
+                .orElseThrow(() -> new RuntimeException("충전소 없음"));
+
+        reservation.setStation(station);
+
+        // 3. 상태 기본값
+        reservation.setStatus(Status.RESERVED);
+
+        // 4. 저장
+        repository.save(reservation);
+    }
+    public ReservationDto getReservation(Long id) {
+
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+        return mapper.toDto(reservation);
+    }
 
     @Transactional
-    public Reservation createReservation(String email, Long stationId, LocalDateTime startTime) {
-        // 1. 충전소 존재 확인
-        Station station = stationRepository.findById(stationId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소 ID입니다: " + stationId));
+    public void cancelReservation(Long id) {
 
-        // 2. 이용 시간 계산 (버퍼 타임 포함)
-        int durationMinutes = calculateDuration(station.getChargerType());
-        LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10);
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
 
-        // 3. 중복 예약 체크
-        if (!reservationRepository.findOverlapping(stationId, startTime, endTime).isEmpty()) {
-            throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
+        if (reservation.getStatus() != Status.RESERVED) {
+            throw new RuntimeException("예약 상태만 취소 가능");
         }
 
-        // 4. 포인트 차감 (비즈니스 정책에 따라 추가)
-        // 예: 기본 예약금 5,000원 선결제 로직이 필요하다면 여기서 호출
-        // walletService.subtractPoint(email, 5000L);
-
-        // 5. 예약 저장
-        Reservation reservation = Reservation.builder()
-                .email(email)
-                .station(station)
-                .startTime(startTime)
-                .endTime(endTime)
-                .status("RESERVED")
-                .build();
-
-        return reservationRepository.save(reservation);
+        reservation.setStatus(Status.CANCELLED);
     }
 
-    /**
-     * 충전기 타입에 따른 이용 시간 계산 (안정성 강화)
-     */
-    private int calculateDuration(String chargerType) {
-        if (chargerType == null || chargerType.isEmpty()) return 60;
+    @Transactional
+    public void startCharging(Long id) {
 
-        String type = chargerType.trim();
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
 
-        // 📍 보내주신 case "type" 로직을 그대로 반영합니다.
-        switch (type) {
-            case "2": // 급속
-                return 40; // ⚡ 급속은 짧게 (40분)
+        LocalDateTime now = LocalDateTime.now();
 
-            case "1": // 완속
-                return 60; // 🐌 완속은 길게 (4시간 - 필요시 60~120분으로 조절)
+        // 1. 시작 가능 조건 (-10분 허용)
+        if (reservation.getStartTime().minusMinutes(10).isAfter(now)) {
+            throw new RuntimeException("아직 시작 시간이 아닙니다.");
+        }
 
-            default:
-                // 만약 "01"~"08" 같은 상세 method 코드가 들어올 경우를 대비
-                if (type.equals("05") || type.equals("06") || type.equals("07") || type.equals("08")) {
-                    return 40; // 급속 계열 커넥터들
-                }
-                return 60; // 기본값
+        if (reservation.getStatus() != Status.RESERVED) {
+            throw new RuntimeException("예약 상태만 시작 가능");
+        }
+
+        // 2. 상태 변경
+        reservation.setStatus(Status.CHARGING);
+    }
+    @Transactional
+    public void endCharging(Long id) {
+
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+        if (reservation.getStatus() != Status.CHARGING) {
+            throw new RuntimeException("충전 중 상태만 종료 가능");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. 초과 여부 판단
+        if (reservation.getEndTime().isBefore(now)) {
+            reservation.setStatus(Status.OVERSTAY);
+        } else {
+            reservation.setStatus(Status.COMPLETED);
         }
     }
-}
+
+//    public Object calculateFee(Long id) {
+//
+//        Reservation reservation = repository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("예약 없음"));
+//
+//        LocalDateTime start = reservation.getStartTime();
+//        LocalDateTime end = reservation.getEndTime() != null
+//                ? reservation.getEndTime()
+//                : LocalDateTime.now();
+//
+//        long minutes = java.time.Duration.between(start, end).toMinutes();
+//
+//        int baseFee = (int) minutes * 100; // 예: 1분 = 100원
+//
+//        int overstayFee = reservation.getOverstayFee();
+//
+//        return new FeeResult(minutes, baseFee, overstayFee);
+//    }
+
+    @Transactional
+    public void pay(Long id, Object paymentRequest) {
+
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+        if (reservation.getStatus() == Status.CANCELLED) {
+            throw new RuntimeException("취소된 예약은 결제 불가");
+        }
+        if (reservation.getStatus() != Status.COMPLETED &&
+                reservation.getStatus() != Status.OVERSTAY) {
+            throw new RuntimeException("결제 가능한 상태가 아닙니다.");
+        }
+        // 결제 성공 가정
+        reservation.setStatus(Status.COMPLETED);
+    }}
+
+
+//1. 충전소/충전기 조회 (상태 포함)
+
+//2. 예약
+//   - 중복 예약 방지
+//   - 동시성 처리
+//   - 예약 유효시간 관리
+
+//3. 시작
+//   - 자동 시작 (예약 시간 도달) 충전시작
+//   - 수동 시작 (예약 전 도달) -10분
+//   - 상태 연동
+
+//4. 충전 진행
+//   - 상태 실시간 업데이트
+//   - 최대 시간 / 완충 감지
+
+//5. 종료
+//   - 수동 종료
+//   - 자동 종료 (완충/시간초과/(오류-회의 필요))
+
+//6. 이용시간 & 요금 계산
+//
+//7. 결제 처리
+//   - 성공/실패/재시도
+
+//8. 후처리
+//   - 알림
+      // -예약 전
+    // 오버차지
+//   - 로그 저장
+
+//예약 생성
+//  ↓
+//중복 체크
+//  ↓
+//RESERVED
+//
+//→ 시작 (-10분 허용)
+//  ↓
+//CHARGING
+//
+//→ 종료
+//  ↓
+//COMPLETED or OVERSTAY
+//
+//→ 요금 계산
+//  ↓
+//결제
