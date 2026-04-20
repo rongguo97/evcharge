@@ -31,9 +31,13 @@ public class PaymentService {
 
                 // .method(payMethod) // 요구사항에 따라 삭제됨
                 .paymentType("TOPUP") // 'CHARGE' 보다 'TOPUP'(충전)이 더 명확.
-                .reservation(null)    // 충전 시에는 연결된 예약이 없음
+                .reservation(null)
+                .build();
 
-    }
+        paymentRepository.save(payment);
+    }// 충전 시에는 연결된 예약이 없음
+
+
 
     /**
      * 예약 결제 내역 저장 (ReservationService에서 호출용)
