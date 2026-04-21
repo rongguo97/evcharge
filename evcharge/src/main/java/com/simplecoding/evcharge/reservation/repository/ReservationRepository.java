@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,4 +35,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     // 추가 내용: 특정 충전소의 오늘 예약 현황만 보기
     List<Reservation> findByStationStationIdAndStartTimeAfter(Long stationId, LocalDateTime now);
+
+    //   날짜 및 시간 별 예약 확인
+    @Query("SELECT r FROM Reservation r WHERE r.station.stationId = :chargerId AND DATE(r.startTime) = :date AND r.status = 'RESERVED'")
+    List<Reservation> findReservedSlotsByDate(@Param("chargerId") Long chargerId, @Param("date") LocalDate date);
 }

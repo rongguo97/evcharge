@@ -11,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Tag(name = "Reservation Controller", description = "예약 관련 API")
 @RestController
@@ -63,5 +65,14 @@ public class ReservationController {
                     0
             ), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    //         날짜 및 시간 별 예약 확인
+    @GetMapping("/slots")
+    public ResponseEntity<List<String>> getReservedSlots(
+            @RequestParam("chargerId") Long chargerId,
+            @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        List<String> reservedSlots = reservationService.getReservedTimeSlots(chargerId, date);
+        return ResponseEntity.ok(reservedSlots);
     }
 }
