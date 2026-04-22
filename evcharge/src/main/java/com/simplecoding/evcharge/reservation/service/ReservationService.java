@@ -2,6 +2,7 @@
 
     import com.simplecoding.evcharge.payment.service.PaymentService;
     import com.simplecoding.evcharge.reservation.dto.FeeResult;
+    import com.simplecoding.evcharge.reservation.entity.ChargeType;
     import com.simplecoding.evcharge.reservation.entity.Reservation;
     import com.simplecoding.evcharge.reservation.entity.Status;
     import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
@@ -98,7 +99,7 @@
 
             Reservation reservation = repository.findById(id)
                     .orElseThrow(() -> new RuntimeException("예약 없음"));
-
+            ChargeType type = reservation.getChargeType();
             LocalDateTime start = reservation.getStartTime();
             LocalDateTime end = reservation.getEndTime() != null
                     ? reservation.getEndTime()
