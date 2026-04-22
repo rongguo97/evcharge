@@ -6,6 +6,8 @@ import com.simplecoding.evcharge.auth.repository.MemberRepository;
 import com.simplecoding.evcharge.common.CommonUtil;
 import com.simplecoding.evcharge.common.MapStruct;
 import com.simplecoding.evcharge.common.jwt.JwtUtils;
+import com.simplecoding.evcharge.wallet.entity.Wallet;
+import com.simplecoding.evcharge.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -13,16 +15,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository repository;
-    private final MapStruct struct;       // DTO <-> Entity 변환기
+    private final WalletRepository walletRepository; // 지갑 레포지토리 주입
+    private final MapStruct struct;
     private final CommonUtil util;
-    private final PasswordEncoder encoder; // 암호화
-
+    private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManagerBuilder managerBuilder;
 
@@ -45,19 +48,29 @@ public class MemberService {
     }
 
     /**
-     * 2) 회원가입
+     * 2) 회원가입 + 지갑 생성
+     * @Transactional: 회원저장은 성공했는데 지갑생성이 실패하면
+     * 전부 취소(Rollback)해서 데이터 꼬임을 방지합니다.
      */
+    @Transactional
     public void save(MemberDto memberDto) {
-        // 중복 체크
+        // 1. 중복 체크
         if (repository.existsById(memberDto.getEmail())) {
             throw new RuntimeException(util.getMessage("errors.register"));
         }
 
-        // 비밀번호 해싱(암호화)
+        // 2. 비밀번호 해싱
         memberDto.setPassword(encoder.encode(memberDto.getPassword()));
 
-        // DTO -> Entity 변환 및 저장
+        // 3. 회원 정보 저장
         Member member = struct.toEntity(memberDto);
         repository.save(member);
+
+        Wallet wallet = new Wallet();
+        wallet.setEmail(member.getEmail()); // 회원 이메일 연결
+        wallet.setPoint(0L);                // 초기 포인트 0원
+        wallet.setReserveFund(0L);          // 초기 적립금 0원
+
+        walletRepository.save(wallet);      // 지갑 저장
     }
 }
