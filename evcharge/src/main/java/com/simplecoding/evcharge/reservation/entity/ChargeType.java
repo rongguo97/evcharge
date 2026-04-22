@@ -29,4 +29,18 @@ public enum ChargeType {
     public enum Category {
         SLOW, FAST
     }
+    public static ChargeType fromKw(int kw) {
+
+        if (kw <= 11) {
+            if (kw <= 3) return SLOW_6H;
+            if (kw <= 7) return SLOW_4H;
+            return SLOW_3H;
+        }
+
+        if (kw <= 50) return FAST_70M;
+        if (kw <= 100) return FAST_40M;
+        if (kw <= 150) return FAST_30M;
+
+        return FAST_20M;
+    }
 }

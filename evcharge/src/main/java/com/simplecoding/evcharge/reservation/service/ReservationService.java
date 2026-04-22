@@ -1,7 +1,9 @@
     package com.simplecoding.evcharge.reservation.service;
 
     import com.simplecoding.evcharge.payment.service.PaymentService;
+    import com.simplecoding.evcharge.reservation.dto.FeeResult;
     import com.simplecoding.evcharge.reservation.entity.Reservation;
+    import com.simplecoding.evcharge.reservation.entity.Status;
     import com.simplecoding.evcharge.reservation.repository.ReservationRepository;
     import com.simplecoding.evcharge.station.entity.Station;
     import com.simplecoding.evcharge.station.repository.StationRepository;
@@ -91,4 +93,100 @@
                     .map(r -> r.getStartTime().format(formatter) + " - " + r.getEndTime().format(formatter))
                     .collect(Collectors.toList());
         }
-    }
+
+        public Object calculateFee(Long id) {
+
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            LocalDateTime start = reservation.getStartTime();
+            LocalDateTime end = reservation.getEndTime() != null
+                    ? reservation.getEndTime()
+                    : LocalDateTime.now();
+
+            long minutes = java.time.Duration.between(start, end).toMinutes();
+
+            //  분당 요금
+            double pricePerMinute = type.getPricePer10Min() / 10.0;
+
+            //  기본 요금 (완충 시간까지만)
+            long normalMinutes = Math.min(minutes, type.getFullChargeMinutes());
+            int baseFee = (int) Math.round(normalMinutes * pricePerMinute);
+
+            //  초과 요금 (무조건 1분당 100원)
+            int overstayFee = 0;
+            if (minutes > type.getFullChargeMinutes()) {
+
+                long overMinutes = minutes - type.getFullChargeMinutes();
+                overstayFee = (int) (overMinutes * 100);
+            }
+
+            return new FeeResult(minutes, baseFee, overstayFee);
+        }
+
+        @jakarta.transaction.Transactional
+        public void pay(Long id, Object paymentRequest) {
+
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            if (reservation.getStatus() == Status.CANCELLED) {
+                throw new RuntimeException("취소된 예약은 결제 불가");
+            }
+            if (reservation.getStatus() != Status.COMPLETED &&
+                    reservation.getStatus() != Status.OVERSTAY) {
+                throw new RuntimeException("결제 가능한 상태가 아닙니다.");
+            }
+            // 결제 성공 가정
+            reservation.setStatus(Status.COMPLETED);
+        }}
+
+
+//1. 충전소/충전기 조회 (상태 포함)
+
+//2. 예약
+//   - 중복 예약 방지
+//   - 동시성 처리
+//   - 예약 유효시간 관리
+
+//3. 시작
+//   - 자동 시작 (예약 시간 도달) 충전시작
+//   - 수동 시작 (예약 전 도달) -10분
+//   - 상태 연동
+
+//4. 충전 진행
+//   - 상태 실시간 업데이트
+//   - 최대 시간 / 완충 감지
+
+//5. 종료
+//   - 수동 종료
+//   - 자동 종료 (완충/시간초과/(오류-회의 필요))
+
+//6. 이용시간 & 요금 계산
+//
+//7. 결제 처리
+//   - 성공/실패/재시도
+
+//8. 후처리
+//   - 알림
+    // -예약 전
+    // 오버차지
+//   - 로그 저장
+
+//예약 생성
+//  ↓
+//중복 체크
+//  ↓
+//RESERVED
+//
+//→ 시작 (-10분 허용)
+//  ↓
+//CHARGING
+//
+//→ 종료
+//  ↓
+//COMPLETED or OVERSTAY
+//
+//→ 요금 계산
+//  ↓
+//결제
