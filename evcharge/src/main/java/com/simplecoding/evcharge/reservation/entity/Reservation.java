@@ -3,6 +3,8 @@ package com.simplecoding.evcharge.reservation.entity;
 import com.simplecoding.evcharge.station.entity.Station;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,4 +41,7 @@ public class Reservation {
     @Column(name = "STATUS", length = 20)
     @Builder.Default // 빌더 사용 시에도 기본값이 적용되도록 설정
     private String status = "RESERVED";
+
+    @Column(name = "R_Date", length = 20)
+    private String rDate;
 }
