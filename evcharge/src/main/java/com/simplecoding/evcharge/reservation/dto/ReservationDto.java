@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -36,4 +37,6 @@ public class ReservationDto {
     // 리액트 등 프론트에서 충전소 이름을 바로 보여주고 싶을 때 유용합니다.
     private String stationName;
     private String address;
+
+    private String rDate;
 }

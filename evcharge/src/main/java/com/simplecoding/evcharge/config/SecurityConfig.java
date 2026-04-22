@@ -45,9 +45,9 @@ public class SecurityConfig {
 //      /images/**, /css/**, /js/**, /favicon.ico, /api/download/** : 이미지, css, js, 파비콘아이콘, 첨부파일 등은 모두 볼 수 있어야 합니다.(인증 없음)
 //      /swagger-ui.html ~  : api 문서 자동 생성 플러그인에서 사용하는 주소는 모두 볼 수 있어야 합니다.(인증 없음)
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()                            // /api/auth/** 주소는 모두 허용(로그인 없이)
-                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")            // /api/admin/** 주소는 관리자만 허용합니다.
-                .requestMatchers("/api/download/**", "/images/**", "/css/**","/js/**", "/favicon.ico").permitAll() // 이미지등은 모두 허용
+                .requestMatchers("/api/auth/** /station/**\", \"/reservation/**\", \"/api/reservation/**").permitAll()                    // /api/auth/** 주소는 모두 허용(로그인 없이)
+               .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")            // /api/admin/** 주소는 관리자만 허용합니다.
+               .requestMatchers("/api/download/**", "/images/**", "/css/**","/js/**", "/favicon.ico").permitAll() // 이미지등은 모두 허용
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**","/v3/api-docs.yaml").permitAll()
                 .requestMatchers("/").permitAll()                                       // / (첫페이지)는 로그인 없이 모두 허용합니다.
                 .anyRequest().authenticated());                                           // 위의 주소 이외의 주소는 모두 로그인해야 볼 수 있습니다.

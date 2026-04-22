@@ -10,7 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +26,14 @@ public class ReservationService {
     private final PaymentService paymentService;
     private final WalletService walletService;
 
+
     @Transactional
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime) {
+        // [추가] 0. 예약 가능 시간 검증 (현재 시간 + 10분 여유 체크)
+        // 9분 남은 시점부터 자동으로 막기 위함
+        if (startTime.isBefore(LocalDateTime.now().plusMinutes(10))) {
+            throw new IllegalArgumentException("예약은 최소 시작 10분 전까지만 가능합니다.");
+        }
         // 1. 충전소 존재 확인
         Station station = stationRepository.findById(stationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소 ID입니다: " + stationId));
@@ -33,7 +43,9 @@ public class ReservationService {
         LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10);
 
         // 3. 중복 예약 체크
-        if (!reservationRepository.findOverlapping(stationId, startTime, endTime).isEmpty()) {
+        String rDate = startTime.toLocalDate().toString();
+
+        if (!reservationRepository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
             throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
         }
 
@@ -47,6 +59,7 @@ public class ReservationService {
                 .station(station)
                 .startTime(startTime)
                 .endTime(endTime)
+                .rDate(rDate)
                 .status("RESERVED")
                 .build();
 
@@ -71,5 +84,15 @@ public class ReservationService {
         }
 
         return 60; // 기본값
+    }
+//         날짜 및 시간 별 예약 확인
+    public List<String> getReservedTimeSlots(Long chargerId, LocalDate date) {
+        String rDate = date.toString();
+        List<Reservation> reservations = reservationRepository.findReservedSlotsByDate(chargerId,rDate);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        return reservations.stream()
+                .map(r -> r.getStartTime().format(formatter) + " - " + r.getEndTime().format(formatter))
+                .collect(Collectors.toList());
     }
 }

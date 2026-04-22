@@ -20,10 +20,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r WHERE r.station.stationId = :stationId " +
             "AND r.status IN ('RESERVED', 'CHARGING') " + // 상태값 확장
             "AND r.startTime < :end " +
-            "AND r.endTime > :start")
+            "AND r.endTime > :start " +
+            "AND r.rDate = :rDate")
     List<Reservation> findOverlapping(@Param("stationId") Long stationId,
                                       @Param("start") LocalDateTime start,
-                                      @Param("end") LocalDateTime end);
+                                      @Param("end") LocalDateTime end, String rDate);
 
     /**
      * 회원의 예약 목록 조회
@@ -34,4 +35,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     // 추가 내용: 특정 충전소의 오늘 예약 현황만 보기
     List<Reservation> findByStationStationIdAndStartTimeAfter(Long stationId, LocalDateTime now);
+
+    //   날짜 및 시간 별 예약 확인
+    @Query("SELECT r FROM Reservation r WHERE r.station.stationId = :chargerId " +
+            "AND r.rDate = :rDate " +
+            "AND r.status = 'RESERVED'")
+    List<Reservation> findReservedSlotsByDate(@Param("chargerId") Long chargerId,
+                                              @Param("rDate") String rDate);
 }
