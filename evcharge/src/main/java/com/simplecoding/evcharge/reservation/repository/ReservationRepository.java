@@ -27,6 +27,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end, String rDate);
 
+
+
     /**
      * 회원의 예약 목록 조회
      * findByEmailOrderByStartTimeDesc 도 좋지만,
@@ -48,6 +50,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      * - 단순 조회용 (RESERVED, CHARGING, FINISHED 등)
      */
     List<Reservation> findByStatus(Status status);
+
+
 
     /**
      * 종료 처리 대상 조회

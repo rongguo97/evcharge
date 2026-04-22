@@ -44,6 +44,8 @@ public interface MapStruct {
     @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
     @Mapping(source = "lng", target = "lng")
     void updateFromDto(StationDto stationDto, @MappingTarget Station station);
+
+
 }
 
 
