@@ -31,12 +31,13 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<Long>> addReservation(
             @RequestParam String email,
             @RequestParam Long stationId,
-            // 1. ISO 포맷을 사용하면 리액트 등 프론트엔드와 통신 시 더 유연합니다.
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            // 📍 1. 프론트가 보내는 endTime을 받도록 파라미터 추가!
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
 
-        // 2. 서비스 호출 시 발생할 수 있는 예외를 대비한 처리 (선택사항, GlobalExceptionHandler가 있다면 생략 가능)
         try {
-            Reservation res = reservationService.createReservation(email, stationId, startTime);
+            // 📍 2. 서비스로 endTime도 같이 넘겨주기!
+            Reservation res = reservationService.createReservation(email, stationId, startTime, endTime);
 
             // 3. HTTP 상태 코드를 201 Created로 반환하는 것이 RESTful 규약에 더 가깝습니다.
             return new ResponseEntity<>(new ApiResponse<>(
