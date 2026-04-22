@@ -1,5 +1,6 @@
 package com.simplecoding.evcharge.reservation.dto;
 
+import com.simplecoding.evcharge.reservation.entity.Status;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -39,4 +40,18 @@ public class ReservationDto {
     private String address;
 
     private String rDate;
+
+    // 초과요금 추가 (서비스에서 쓰고 있었음)
+    private int overstayFee;
+
+    public ReservationDto(Long reservationId, Long stationId, @NonNull String email, @NonNull LocalDateTime startTime, LocalDateTime endTime, Status status, String stationName, String address) {
+        this.reservationId = reservationId;
+        this.stationId = stationId;
+        this.email = email;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.stationName = stationName;
+        this.address = address;
+    }
 }

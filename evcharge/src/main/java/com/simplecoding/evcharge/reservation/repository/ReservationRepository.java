@@ -1,6 +1,7 @@
 package com.simplecoding.evcharge.reservation.repository;
 
 import com.simplecoding.evcharge.reservation.entity.Reservation;
+import com.simplecoding.evcharge.reservation.entity.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +43,36 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "AND r.status = 'RESERVED'")
     List<Reservation> findReservedSlotsByDate(@Param("chargerId") Long chargerId,
                                               @Param("rDate") String rDate);
+    /**
+     * 상태 기준 예약 전체 조회
+     * - 단순 조회용 (RESERVED, CHARGING, FINISHED 등)
+     */
+    List<Reservation> findByStatus(Status status);
+
+    /**
+     * 종료 처리 대상 조회
+     * - endTime <= now
+     * - CHARGING 상태
+     * - 정상 종료 처리용 스케줄러
+     */
+    @Query("""
+        SELECT r
+        FROM Reservation r
+        WHERE r.endTime <= :now
+          AND r.status = 'CHARGING'
+    """)
+    List<Reservation> findEndTargets(@Param("now") LocalDateTime now);
+
+    /**
+     * 초과 사용(Overstay) 대상 조회
+     * - 종료 시간이 지났는데도 CHARGING 상태 유지 중
+     * - 과금 / 패널티 처리 대상
+     */
+    @Query("""
+        SELECT r
+        FROM Reservation r
+        WHERE r.endTime < :now
+          AND r.status = 'CHARGING'
+    """)
+    List<Reservation> findOverstayTargets(@Param("now") LocalDateTime now);
 }
