@@ -26,6 +26,7 @@ public class ReservationService {
     private final PaymentService paymentService;
     private final WalletService walletService;
 
+
     @Transactional
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime) {
         // [추가] 0. 예약 가능 시간 검증 (현재 시간 + 10분 여유 체크)
@@ -42,7 +43,9 @@ public class ReservationService {
         LocalDateTime endTime = startTime.plusMinutes(durationMinutes + 10);
 
         // 3. 중복 예약 체크
-        if (!reservationRepository.findOverlapping(stationId, startTime, endTime).isEmpty()) {
+        String rDate = startTime.toLocalDate().toString();
+
+        if (!reservationRepository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
             throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
         }
 
@@ -56,6 +59,7 @@ public class ReservationService {
                 .station(station)
                 .startTime(startTime)
                 .endTime(endTime)
+                .rDate(rDate)
                 .status("RESERVED")
                 .build();
 
@@ -83,7 +87,8 @@ public class ReservationService {
     }
 //         날짜 및 시간 별 예약 확인
     public List<String> getReservedTimeSlots(Long chargerId, LocalDate date) {
-        List<Reservation> reservations = reservationRepository.findReservedSlotsByDate(chargerId, date);
+        String rDate = date.toString();
+        List<Reservation> reservations = reservationRepository.findReservedSlotsByDate(chargerId,rDate);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
         return reservations.stream()
