@@ -9,10 +9,19 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // insertTime -> createdAt 으로 필드명이 바뀌었다면 메서드명도 수정!
-    // 회원별 결제 내역을 최신순으로 조회
+    /**
+     * 1) 회원별 결제 내역 최신순 조회
+     * 필드명이 createdAt 이므로 메서드명도 이에 맞춰야 함
+     */
     List<Payment> findByEmailOrderByCreatedAtDesc(String email);
 
-    // 특정 예약 번호에 해당하는 결제 내역 찾기 (신규 추가된 기능)
-    List<Payment> findByReservationId(Long reservationId);
+    /**
+     * 2) 특정 예약 번호에 해당하는 결제 내역 찾기
+     * 수정 포인트: Payment 엔티티에 'reservation' 객체가 있으므로, 그 안의 'reservationId'를 찾으려면 언더바(_)를 사용하거나
+     * 객체 참조 경로를 정확히 명시해야함.
+     */
+    List<Payment> findByReservation_ReservationId(Long reservationId);
+
+    // 나중에 리액트에서 "더보기" 기능을 만들 때 사용하세요!
+    //    Page<Payment> findByEmailOrderByCreatedAtDesc(String email, Pageable pageable);
 }
