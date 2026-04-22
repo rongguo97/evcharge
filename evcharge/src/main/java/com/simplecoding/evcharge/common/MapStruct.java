@@ -43,9 +43,9 @@ public interface MapStruct {
     StationDto toDto(Station station);
 
     // 3. 수정 시 사용 (Dirty Checking용)
-    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
-    @Mapping(source = "lng", target = "lng")
-    @Mapping(target = "expectedEndTime", source = "endTime")
+//    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
+//    @Mapping(source = "lng", target = "lng")
+//    @Mapping(target = "expectedEndTime", source = "endTime")
     ReservationDto toDto(Reservation reservation);
     Reservation toEntity(ReservationDto dto);
     void updateFromDto(StationDto stationDto, @MappingTarget Station station);

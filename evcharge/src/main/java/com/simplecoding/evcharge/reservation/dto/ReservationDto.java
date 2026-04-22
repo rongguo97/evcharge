@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class ReservationDto {
 
     // 1. 예약 ID (생성 시에는 Null일 수 있으므로 @NotNull 제거 고려)
-    private Long id;
+    private Long reservationId;
 
     // 2. [중요] chargerId -> stationId로 변경
     @NotNull(message = "충전소 ID는 필수입니다.")
@@ -44,8 +44,8 @@ public class ReservationDto {
     // 초과요금 추가 (서비스에서 쓰고 있었음)
     private int overstayFee;
 
-    public ReservationDto(Long id, Long stationId, String email, LocalDateTime startTime, LocalDateTime endTime, String status, String stationName, String address) {
-        this.id = id;
+    public ReservationDto(Long reservationId, Long stationId, String email, LocalDateTime startTime, LocalDateTime endTime, String status, String stationName, String address) {
+        this.reservationId = reservationId;
         this.stationId = stationId;
         this.email = email;
         this.startTime = startTime;
