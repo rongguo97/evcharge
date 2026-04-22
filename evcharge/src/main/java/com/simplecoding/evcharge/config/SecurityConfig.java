@@ -13,6 +13,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+//임시 테스트용 허용 import
+import org.springframework.http.HttpMethod; // ⭐ 추가된 임포트
+import org.springframework.web.cors.CorsConfiguration; // ⭐ 추가된 임포트
+import org.springframework.web.cors.CorsConfigurationSource; // ⭐ 추가된 임포트
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // ⭐ 추가된 임포트
+import java.util.Arrays; // ⭐ 추가된 임포트
 
 @Configuration           // 자바파일을 설정파일로 사용하게하는 어노테이션
 @EnableWebSecurity       // 시큐리티 설정을 위한 어노테이션
@@ -45,7 +51,9 @@ public class SecurityConfig {
 //      /images/**, /css/**, /js/**, /favicon.ico, /api/download/** : 이미지, css, js, 파비콘아이콘, 첨부파일 등은 모두 볼 수 있어야 합니다.(인증 없음)
 //      /swagger-ui.html ~  : api 문서 자동 생성 플러그인에서 사용하는 주소는 모두 볼 수 있어야 합니다.(인증 없음)
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/** /station/**\", \"/reservation/**\", \"/api/reservation/**").permitAll()                    // /api/auth/** 주소는 모두 허용(로그인 없이)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //테스트용 임시 허용
+                .requestMatchers("/station/**", "/reservation/**", "/api/station/**", "/api/reservation/**").permitAll() //테스트용 임시허용
+                .requestMatchers("/api/auth/** /station/**\", \"/reservation/**\", \"/api/reservations/**", "/api/api/**").permitAll()                    // /api/auth/** 주소는 모두 허용(로그인 없이)
                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")            // /api/admin/** 주소는 관리자만 허용합니다.
                .requestMatchers("/api/download/**", "/images/**", "/css/**","/js/**", "/favicon.ico").permitAll() // 이미지등은 모두 허용
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**","/v3/api-docs.yaml").permitAll()
@@ -58,5 +66,20 @@ public class SecurityConfig {
         http.addFilterBefore(JwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();                                                              // 위의 설정 실행 끝
+    }
+    // ⭐ 3. CORS 전역 설정 (프론트엔드 포트의 접근을 완벽히 허용)    테스트용 임시허용
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 모든 프론트 주소 허용 (테스트용)
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true); // 인증 정보 허용
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 위 CORS 설정 적용
+
+        return source;
     }
 }
