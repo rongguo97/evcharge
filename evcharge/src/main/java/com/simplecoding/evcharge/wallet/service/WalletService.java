@@ -28,6 +28,10 @@ public class WalletService {
                 });
     }
 
+    public Wallet getWallet(String email) {
+        return walletRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("지갑을 찾을 수 없습니다."));
+    }
     /**
      * 적립금 충전 (외부 결제 TOPUP)
      * 결제 금액의 10%를 포인트로 적립하는 로직 포함
