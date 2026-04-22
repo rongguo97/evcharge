@@ -27,6 +27,7 @@ public class ReservationDto {
     private String stationName;
     private String address;
 
+    private ChargeType chargeType;
 
 
     // 초과요금 추가 (서비스에서 쓰고 있었음)

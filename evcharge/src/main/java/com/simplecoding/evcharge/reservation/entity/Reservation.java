@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "TB_RESERVATION")
 @Getter
 @Setter
-@NoArgsConstructor // ✅ JPA 필수
+@NoArgsConstructor //  JPA 필수
 @AllArgsConstructor
 @Builder
 public class Reservation {
@@ -32,5 +32,6 @@ public class Reservation {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-
+    @Enumerated(EnumType.STRING)
+    private ChargeType chargeType;
 }

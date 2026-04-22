@@ -35,6 +35,10 @@ public class ReservationService extends BaseTimeEntity {
     @Transactional
     public void createReservation(ReservationDto dto) {
 
+        // 0. 충전소 락
+        // Station station = repository.lockStation(dto.getStationId());
+
+
         // 1. 중복 예약 체크
         boolean isOverlap = repository.existsOverlapReservation(
                 dto.getStationId(),
@@ -120,24 +124,35 @@ public class ReservationService extends BaseTimeEntity {
         }
     }
 
-//    public Object calculateFee(Long id) {
-//
-//        Reservation reservation = repository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("예약 없음"));
-//
-//        LocalDateTime start = reservation.getStartTime();
-//        LocalDateTime end = reservation.getEndTime() != null
-//                ? reservation.getEndTime()
-//                : LocalDateTime.now();
-//
-//        long minutes = java.time.Duration.between(start, end).toMinutes();
-//
-//        int baseFee = (int) minutes * 100; // 예: 1분 = 100원
-//
-//        int overstayFee = reservation.getOverstayFee();
-//
-//        return new FeeResult(minutes, baseFee, overstayFee);
-//    }
+    public Object calculateFee(Long id) {
+
+        Reservation reservation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+        LocalDateTime start = reservation.getStartTime();
+        LocalDateTime end = reservation.getEndTime() != null
+                ? reservation.getEndTime()
+                : LocalDateTime.now();
+
+        long minutes = java.time.Duration.between(start, end).toMinutes();
+
+          //  분당 요금
+    double pricePerMinute = type.getPricePer10Min() / 10.0;
+
+    //  기본 요금 (완충 시간까지만)
+    long normalMinutes = Math.min(minutes, type.getFullChargeMinutes());
+    int baseFee = (int) Math.round(normalMinutes * pricePerMinute);
+
+    //  초과 요금 (무조건 1분당 100원)
+    int overstayFee = 0;
+    if (minutes > type.getFullChargeMinutes()) {
+
+        long overMinutes = minutes - type.getFullChargeMinutes();
+        overstayFee = (int) (overMinutes * 100);
+    }
+
+    return new FeeResult(minutes, baseFee, overstayFee);
+}
 
     @Transactional
     public void pay(Long id, Object paymentRequest) {

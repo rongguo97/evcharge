@@ -1,6 +1,7 @@
 package com.simplecoding.evcharge.reservation.controller;
 
 import com.simplecoding.evcharge.common.ApiResponse;
+import com.simplecoding.evcharge.reservation.dto.FeeResult;
 import com.simplecoding.evcharge.reservation.dto.ReservationDto;
 import com.simplecoding.evcharge.reservation.entity.Status;
 import com.simplecoding.evcharge.reservation.service.ReservationService;
@@ -84,7 +85,19 @@ public class ReservationController {
         service.pay(id, paymentRequest);
 
         return ResponseEntity.ok().build();
-    }}
+    }
+
+    @GetMapping("/{id}/fee")
+    public ResponseEntity<ApiResponse<FeeResult>> getFee(@PathVariable Long id) {
+
+        FeeResult result = (FeeResult) service.calculateFee(id);
+
+        ApiResponse<FeeResult> response =
+                new ApiResponse<>(true, "요금 계산 성공", result, 0, 0);
+
+        return ResponseEntity.ok(response);
+    }
+}
 //
 //| API     | 상태                   |
 //        | ------- | -------------------- |
