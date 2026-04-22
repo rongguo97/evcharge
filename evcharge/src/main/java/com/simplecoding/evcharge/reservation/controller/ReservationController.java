@@ -1,7 +1,9 @@
 package com.simplecoding.evcharge.reservation.controller;
 
 import com.simplecoding.evcharge.common.ApiResponse;
-import com.simplecoding.evcharge.reservation.entity.Reservation;
+import com.simplecoding.evcharge.reservation.dto.FeeResult;
+import com.simplecoding.evcharge.reservation.dto.ReservationDto;
+import com.simplecoding.evcharge.reservation.entity.Status;
 import com.simplecoding.evcharge.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
