@@ -84,10 +84,7 @@ public class ReservationController {
     }
 
 
-    @RestController
-    @RequiredArgsConstructor
-    @RequestMapping("/api/reservations")
-    public class ReservationController {
+
 
         private final ReservationService service;
         @GetMapping
@@ -112,8 +109,8 @@ public class ReservationController {
         }
         @PostMapping
         public ResponseEntity<Void> create(@RequestBody ReservationDto dto) {
-
-            service.createReservation(dto);
+//String email, Long stationId, LocalDateTime startTime, LocalDateTime endTime
+            service.createReservation(dto.getEmail(), dto.getStationId(), dto.getStartTime(), dto.getEndTime());
 
             return ResponseEntity.ok().build();
         }
@@ -181,4 +178,3 @@ public class ReservationController {
 //PUT    /reservations/{id}/start
 //PUT    /reservations/{id}/end
 //PUT    /reservations/{id}/cancel
-}

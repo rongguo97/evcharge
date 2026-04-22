@@ -44,8 +44,8 @@ public class ReservationDto {
     // 초과요금 추가 (서비스에서 쓰고 있었음)
     private int overstayFee;
 
-    public ReservationDto(Long reservationId, Long stationId, @NonNull String email, @NonNull LocalDateTime startTime, LocalDateTime endTime, Status status, String stationName, String address) {
-        this.reservationId = reservationId;
+    public ReservationDto(Long id, Long stationId, String email, LocalDateTime startTime, LocalDateTime endTime, String status, String stationName, String address) {
+        this.id = id;
         this.stationId = stationId;
         this.email = email;
         this.startTime = startTime;

@@ -1,7 +1,10 @@
 package com.simplecoding.evcharge.reservation.repository;
 
+import com.simplecoding.evcharge.reservation.dto.ReservationDto;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.reservation.entity.Status;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +30,27 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                       @Param("start") LocalDateTime start,
                                       @Param("end") LocalDateTime end, String rDate);
 
+    @Query("""
+        SELECT new com.simplecoding.evcharge.reservation.dto.ReservationDto(
+            r.id,
+            r.station.stationId,
+            r.email,
+            r.startTime,
+            r.endTime,
+            r.status,
+            r.station.stationName,
+            r.station.address
+
+        )
+        FROM Reservation r
+        WHERE (:email IS NULL OR r.email = :email)
+          AND (:status IS NULL OR r.status = :status)
+    """)
+    Page<ReservationDto> findReservationList(
+            @Param("email") String email,
+            @Param("status") Status status,
+            Pageable pageable
+    );
 
 
     /**

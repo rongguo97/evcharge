@@ -1,7 +1,9 @@
     package com.simplecoding.evcharge.reservation.service;
 
+    import com.simplecoding.evcharge.common.MapStruct;
     import com.simplecoding.evcharge.payment.service.PaymentService;
     import com.simplecoding.evcharge.reservation.dto.FeeResult;
+    import com.simplecoding.evcharge.reservation.dto.ReservationDto;
     import com.simplecoding.evcharge.reservation.entity.ChargeType;
     import com.simplecoding.evcharge.reservation.entity.Reservation;
     import com.simplecoding.evcharge.reservation.entity.Status;
@@ -10,6 +12,8 @@
     import com.simplecoding.evcharge.station.repository.StationRepository;
     import com.simplecoding.evcharge.wallet.service.WalletService;
     import lombok.RequiredArgsConstructor;
+    import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.Pageable;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +27,20 @@
     @RequiredArgsConstructor
     public class ReservationService {
 
-        private final ReservationRepository reservationRepository;
+        private final ReservationRepository repository;
         private final StationRepository stationRepository;
+        private final MapStruct mapper;
         // paymentService와 walletService는 나중에 결제/취소 로직 확장 시 활용하세요.
         private final PaymentService paymentService;
         private final WalletService walletService;
 
 
+        public Page<ReservationDto> getReservationList(String email,
+                                                       Status status,
+                                                       Pageable pageable) {
+
+            return repository.findReservationList(email, status, pageable);
+        }
         @Transactional
         public Reservation createReservation(String email, Long stationId, LocalDateTime startTime, LocalDateTime endTime) {
             // [추가] 0. 예약 가능 시간 검증 (현재 시간 + 10분 여유 체크)
@@ -44,7 +55,7 @@
             // 3. 중복 예약 체크
             String rDate = startTime.toLocalDate().toString();
 
-            if (!reservationRepository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
+            if (!repository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
                 throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
             }
 
@@ -59,12 +70,18 @@
                     .startTime(startTime)
                     .endTime(endTime)
                     .rDate(rDate)
-                    .status("RESERVED")
+                    .status(Status.valueOf("RESERVED"))
                     .build();
 
-            return reservationRepository.save(reservation);
+            return repository.save(reservation);
         }
+        public ReservationDto getReservation(Long id) {
 
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            return mapper.toDto(reservation);
+        }
         /**
          * 충전기 타입에 따른 이용 시간 계산 (안정성 강화)
          */
@@ -87,12 +104,65 @@
     //         날짜 및 시간 별 예약 확인
         public List<String> getReservedTimeSlots(Long chargerId, LocalDate date) {
             String rDate = date.toString();
-            List<Reservation> reservations = reservationRepository.findReservedSlotsByDate(chargerId,rDate);
+            List<Reservation> reservations = repository.findReservedSlotsByDate(chargerId,rDate);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
 
             return reservations.stream()
                     .map(r -> r.getStartTime().format(formatter) + " - " + r.getEndTime().format(formatter))
                     .collect(Collectors.toList());
+        }
+
+        @jakarta.transaction.Transactional
+        public void cancelReservation(Long id) {
+
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            if (reservation.getStatus() != Status.RESERVED) {
+                throw new RuntimeException("예약 상태만 취소 가능");
+            }
+
+            reservation.setStatus(Status.CANCELLED);
+        }
+
+        @jakarta.transaction.Transactional
+        public void startCharging(Long id) {
+
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            LocalDateTime now = LocalDateTime.now();
+
+            // 1. 시작 가능 조건 (-10분 허용)
+            if (reservation.getStartTime().minusMinutes(10).isAfter(now)) {
+                throw new RuntimeException("아직 시작 시간이 아닙니다.");
+            }
+
+            if (reservation.getStatus() != Status.RESERVED) {
+                throw new RuntimeException("예약 상태만 시작 가능");
+            }
+
+            // 2. 상태 변경
+            reservation.setStatus(Status.CHARGING);
+        }
+        @jakarta.transaction.Transactional
+        public void endCharging(Long id) {
+
+            Reservation reservation = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+
+            if (reservation.getStatus() != Status.CHARGING) {
+                throw new RuntimeException("충전 중 상태만 종료 가능");
+            }
+
+            LocalDateTime now = LocalDateTime.now();
+
+            // 1. 초과 여부 판단
+            if (reservation.getEndTime().isBefore(now)) {
+                reservation.setStatus(Status.OVERSTAY);
+            } else {
+                reservation.setStatus(Status.COMPLETED);
+            }
         }
 
         public Object calculateFee(Long id) {
