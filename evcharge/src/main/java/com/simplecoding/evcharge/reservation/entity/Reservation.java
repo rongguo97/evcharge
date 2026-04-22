@@ -44,4 +44,7 @@ public class Reservation {
 
     @Column(name = "R_Date", length = 20)
     private String rDate;
+
+    @Enumerated(EnumType.STRING)
+    private ChargeType chargeType;
 }
