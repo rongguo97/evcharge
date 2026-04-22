@@ -32,7 +32,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("""
         SELECT new com.simplecoding.evcharge.reservation.dto.ReservationDto(
-            r.id,
+            r.reservationId,
             r.station.stationId,
             r.email,
             r.startTime,
@@ -40,7 +40,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             r.status,
             r.station.stationName,
             r.station.address
-
         )
         FROM Reservation r
         WHERE (:email IS NULL OR r.email = :email)
@@ -48,7 +47,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     """)
     Page<ReservationDto> findReservationList(
             @Param("email") String email,
-            @Param("status") Status status,
+            @Param("status") String status, // 📍 여기를 Status 객체에서 String으로 바꿨습니다!
             Pageable pageable
     );
 

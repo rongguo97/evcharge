@@ -20,7 +20,7 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "res_seq")
     @SequenceGenerator(name = "res_seq", sequenceName = "SQ_RESERVATION", allocationSize = 1)
     @Column(name = "RESERVATION_ID")
-    private Long id;
+    private Long reservationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     // 2. nullable = false 추가 (예약에는 반드시 충전소가 있어야 함)
@@ -41,13 +41,10 @@ public class Reservation {
 
     // 3. length 제한 및 기본값 명시
 
-
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private String status;
 
     @Column(name = "R_Date", length = 20)
     private String rDate;
 
-    @Enumerated(EnumType.STRING)
-    private ChargeType chargeType;
+
 }
