@@ -64,14 +64,20 @@ public class JwtUtils {
         return false;
     }
 
-    // 4) 쿠키에서 JWT 뽑아내기
+    // JwtUtils.java 내부
     public Optional<String> getJwtFromCookies(HttpServletRequest request) {
-        if (request.getCookies() == null) return Optional.empty();
+        // 1. 요청에서 모든 쿠키를 가져옴
+        Cookie[] cookies = request.getCookies();
 
-        return Arrays.stream(request.getCookies())
-                .filter(c -> "jwt".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                // 2. 쿠키 이름이 "jwt"인 것을 찾음 (MemberController에서 정한 이름)
+                if ("jwt".equals(cookie.getName())) {
+                    return Optional.of(cookie.getValue());
+                }
+            }
+        }
+        return Optional.empty();
     }
     //  목적: html 문서 헤더에서 웹토큰(JWT)을 뽑아내는 함수(이 예제에서는 안씁니다)
     public String parseJwt(HttpServletRequest request) {
