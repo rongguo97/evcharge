@@ -52,8 +52,7 @@ public class SecurityConfig {
 //      /swagger-ui.html ~  : api 문서 자동 생성 플러그인에서 사용하는 주소는 모두 볼 수 있어야 합니다.(인증 없음)
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //테스트용 임시 허용
-                .requestMatchers("/station/**", "/reservation/**", "/api/station/**", "/api/reservation/**","/api/reservation/estimate-fee","/api/wallet/**").permitAll() //테스트용 임시허용
-                .requestMatchers("/api/auth/** /station/**\", \"/reservation/**\", \"/api/reservations/**", "/api/api/**").permitAll()                    // /api/auth/** 주소는 모두 허용(로그인 없이)
+                .requestMatchers("/api/auth/**").permitAll() // /api/auth/** 주소는 모두 허용(로그인 없이)
                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")            // /api/admin/** 주소는 관리자만 허용합니다.
                .requestMatchers("/api/download/**", "/images/**", "/css/**","/js/**", "/favicon.ico").permitAll() // 이미지등은 모두 허용
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**","/v3/api-docs.yaml").permitAll()
@@ -67,19 +66,20 @@ public class SecurityConfig {
 
         return http.build();                                                              // 위의 설정 실행 끝
     }
-    // ⭐ 3. CORS 전역 설정 (프론트엔드 포트의 접근을 완벽히 허용)    테스트용 임시허용
+    //  3. CORS 전역 설정 (프론트엔드 포트의 접근을 완벽히 허용)    테스트용 임시허용
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 모든 프론트 주소 허용 (테스트용)
+        // 실제 프론트엔드 주소를 명시해야함 (Vite 기본 포트 5173)
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://127.0.0.1:5173"));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true); // 인증 정보 허용
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowCredentials(true); // 쿠키 허용 필수!
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 위 CORS 설정 적용
-
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
