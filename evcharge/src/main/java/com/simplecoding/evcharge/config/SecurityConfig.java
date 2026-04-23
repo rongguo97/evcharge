@@ -30,11 +30,11 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-// 2) 웹토큰 자동 검사 필터: AuthTokenFilter
-    @Bean                                      // IOC
-    public AuthTokenFilter JwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+    // 2) 웹토큰 자동 검사 필터: AuthTokenFilter
+        @Bean                                      // IOC
+        public AuthTokenFilter JwtTokenFilter() {
+            return new AuthTokenFilter();
+        }
 
 // 3) 인증/권한 설정: 로그인과 권한 설정은 여기서 하세요
     @Bean
