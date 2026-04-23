@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +29,7 @@ public class MemberController {
      * 1) 로그인: ID/PWD 확인 후 JWT를 쿠키에 구워서 응답합니다.
      */
     @PostMapping("/auth/login")
-    public ResponseEntity<Void> login(@RequestBody MemberDto memberDto) {
+    public ResponseEntity<MemberDto> login(@RequestBody MemberDto memberDto) {
         // 1. 서비스에서 로그인 인증 후 JWT 토큰 생성
         String jwt = service.login(memberDto);
 
@@ -38,11 +39,12 @@ public class MemberController {
                 .secure(false)                 // TODO: HTTPS 환경이라면 true로 변경하세요.
                 .path("/")                     // 모든 경로에서 쿠키 유효
                 .maxAge(60 * 60 * 24)          // 쿠키 수명 (예: 1일)
+                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .build();
+                .body(memberDto);
     }
 
     /**
@@ -80,8 +82,9 @@ public class MemberController {
      * SecurityConfig에서 이 주소는 authenticated() 설정이 되어 있어야 합니다.
      */
     @GetMapping("/me")
-    public ResponseEntity<Void> me() {
-        log.info("인증된 사용자 접근 완료");
-        return ResponseEntity.ok().build();
+    public ResponseEntity<MemberDto> me(Authentication authentication) {
+        String email = authentication.getName();
+        log.info("인증된 사용자 [{}] 접근 완료", email);
+        return ResponseEntity.ok(MemberDto.builder().email(email).build());
     }
 }
