@@ -1,0 +1,313 @@
+:root {
+  --primary-purple: #9b72cf;
+  --deep-purple: #4a2c73;
+  --white: #ffffff;
+  --black: #1a1a1a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: "Noto Sans KR", sans-serif;
+  background-color: #f8f9fc;
+  overflow-x: hidden;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* --- 헤더 레이아웃 (PC 기준) --- */
+header.main-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: 0.3s ease;
+}
+header.main-header:hover {
+  background: var(--white);
+}
+
+.nav-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100px;
+}
+
+/* 양끝 정렬 보정 */
+.logo,
+.header-util-space {
+  width: 200px;
+  flex-shrink: 0;
+  z-index: 1001;
+}
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--white);
+  letter-spacing: 2px;
+  transition: 0.3s;
+}
+header:hover .logo {
+  color: var(--deep-purple);
+}
+
+/* 중앙 GNB */
+.gnb {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.main-menu {
+  display: flex;
+  list-style: none;
+  width: 100%;
+  max-width: 700px;
+  justify-content: space-around;
+}
+.main-menu li a {
+  text-decoration: none;
+  font-weight: 700;
+  color: var(--white);
+  font-size: 1.1rem;
+  transition: 0.3s;
+}
+header:hover .main-menu a {
+  color: var(--black);
+}
+.main-menu li a.active {
+  color: var(--primary-purple);
+}
+
+.mobile-only-sub {
+  display: none;
+} /* PC에선 숨김 */
+
+/* PC 메가 메뉴 패널 */
+.mega-menu-panel {
+  position: absolute;
+  top: 100px;
+  left: 0;
+  width: 100%;
+  background: var(--white);
+  height: 0;
+  overflow: hidden;
+  transition: 0.4s;
+  border-top: 1px solid #eee;
+}
+header:hover .mega-menu-panel {
+  height: 260px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+.panel-content {
+  display: flex;
+  max-width: 700px;
+  margin: 0 auto;
+  padding-top: 30px;
+  justify-content: space-around;
+}
+.panel-column {
+  flex: 1;
+  text-align: center;
+  list-style: none;
+}
+.panel-column ul li {
+  list-style: none;
+  margin-bottom: 10px;
+}
+.panel-column ul li a {
+  text-decoration: none;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* --- 햄버거 및 트리거 숨기기 (PC) --- */
+.menu-trigger,
+.menu-btn {
+  display: none;
+}
+
+/* --- 퀵메뉴 --- */
+.side-quick-menu {
+  position: fixed;
+  right: 0;
+  top: 30%;
+  z-index: 999;
+}
+.quick-btn {
+  display: block;
+  writing-mode: vertical-rl;
+  padding: 30px 15px;
+  margin-top: 20px;
+  text-decoration: none;
+  color: var(--white);
+  font-weight: bold;
+  border-radius: 20px 0 0 20px;
+  margin-bottom: 5px;
+  background: #9381ff;
+}
+.admin-page {
+  background-color: #b8b8ff;
+}
+
+@media (max-width: 900px) {
+  .nav-wrapper {
+    height: 70px;
+  }
+  header.main-header {
+    position: fixed;
+    background: var(--white);
+    border-bottom: 1px solid #eee;
+  }
+  .logo {
+    color: var(--deep-purple);
+    width: auto;
+  }
+  .header-util-space {
+    display: none;
+  }
+
+  /* 햄버거 버튼 보이기 */
+  .menu-btn {
+    display: block;
+    width: 25px;
+    height: 18px;
+    position: relative;
+    z-index: 1002;
+    cursor: pointer;
+  }
+  .menu-btn span {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--deep-purple);
+    transition: 0.3s;
+  }
+  .menu-btn span:nth-child(1) {
+    top: 0;
+  }
+  .menu-btn span:nth-child(2) {
+    top: 8px;
+  }
+  .menu-btn span:nth-child(3) {
+    bottom: 0;
+  }
+
+  /* 모바일용 GNB 슬라이드 메뉴 */
+  .gnb {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    background: var(--white);
+    transition: 0.4s;
+    display: block;
+    padding: 100px 20px 40px;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+
+    /* ☑️ 스크롤 추가 */
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+
+    /* 1. 높이를 화면 전체(100vh)로 설정 */
+    height: 100vh;
+
+    /* 2. 내용이 넘칠 경우 세로 스크롤 허용 */
+    overflow-y: auto;
+
+    /* 3. 모바일 기기에서 부드러운 스크롤 적용 */
+    -webkit-overflow-scrolling: touch;
+
+    background: var(--white);
+    transition: 0.4s;
+    padding: 80px 20px 40px; /* 상단 닫기 버튼/로고 공간 확보 */
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    display: block; /* 가로 배열 해제 */
+  }
+
+  /* 메뉴가 열렸을 때 바깥 본문 스크롤을 막고 싶다면 
+       (선택사항: 자바스크립트가 필요하므로 일단 CSS로 메뉴 내부 스크롤만 해결) */
+  .menu-trigger:checked ~ .gnb {
+    left: 0;
+  }
+
+  .main-menu {
+    display: block;
+    max-width: 100%;
+  }
+  .main-menu li {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 15px 0;
+  }
+  .main-menu li a {
+    color: var(--black);
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* 모바일 서브메뉴 노출 */
+  .mobile-only-sub {
+    display: block;
+    list-style: none;
+    padding-left: 15px;
+  }
+  .mobile-only-sub li {
+    border: none;
+    padding: 5px 0;
+  }
+  .mobile-only-sub li a {
+    font-size: 0.9rem;
+    color: #777;
+    font-weight: 400;
+  }
+
+  /* PC 전용 패널 숨김 */
+  .mega-menu-panel {
+    display: none;
+  }
+
+  /* 메뉴 동작 컨트롤 */
+  .menu-trigger:checked ~ .gnb {
+    left: 0;
+  }
+  .menu-trigger:checked ~ .menu-overlay {
+    display: block;
+  }
+  .menu-trigger:checked ~ .menu-btn span:nth-child(1) {
+    transform: rotate(45deg);
+    top: 8px;
+  }
+  .menu-trigger:checked ~ .menu-btn span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-trigger:checked ~ .menu-btn span:nth-child(3) {
+    transform: rotate(-45deg);
+    bottom: 8px;
+  }
+
+  .menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Document</title>
+    <link rel="stylesheet" href="../002.css/01_door.css" />
+  </head>
+  <body>
+    <div class="video-container">
+      <!-- autoplay(자동재생), muted(음소거), loop(반복), playsinline(모바일 전체화면 방지) -->
+      <video autoplay muted loop playsinline class="back-video">
+        <source src="../KakaoTalk_20260325_121226509.mp4" type="video/mp4" />
+        브라우저가 비디오 태그를 지원하지 않습니다.
+      </video>
+
+      <!-- 영상 위에 얹을 콘텐츠 (선택 사항) -->
+      <div class="content">
+        <h1 id="target-title">CHACARGE</h1>
+      </div>
+
+      <div class="login-box">
+        <!-- <h1 class="title-login">로그인</h1> -->
+        <form class="login-product" action="./02_main.html">
+          <input name="id" placeholder="id" />
+          <br />
+          <input name="password" placeholder="password" />
+          <button type="submit" class="click-login">login</button>
+        </form>
+      </div>
+    </div>
+
+<SCript>
+  window.onload = function() {
+  const title = document.getElementById('target-title');
+  const text = title.innerText;
+  title.innerHTML = ''; // 기존 텍스트 비우기
+
+  // 1. 각 글자를 span으로 감싸서 다시 넣기
+  [...text].forEach((char) => {
+    const span = document.createElement('span');
+    span.innerText = char === ' ' ? '\u00A0' : char; // 공백 처리
+    
+    // 2. 랜덤한 초기 위치 설정 (좌우 -500~500px, 상하 -500~500px, 회전)
+    const randomX = Math.floor(Math.random() * 1000) - 500;
+    const randomY = Math.floor(Math.random() * 1000) - 500;
+    const randomRotate = Math.floor(Math.random() * 360);
+    
+    span.style.transform = `translate(${randomX}px, ${randomY}px) rotate(${randomRotate}deg)`;
+    
+    title.appendChild(span);
+  });
+
+  // 3. 약간의 지연 후 애니메이션 시작 (active 클래스 추가)
+  setTimeout(() => {
+    title.classList.add('active');
+  }, 100);
+};
+
+</SCript>
+
+  </body>
+</html>
+
+<!--           <div class="login-box">
+      <h1 class="title-login">로그인</h1>
+
+      <div class="login-product">
+        <input name="login" placeholder="id" />
+        <br />
+        <input name="login" placeholder="password" />
+        <button class="click-login">login</button>
+      </div>
+    </div> -->
+
+
+
+
+

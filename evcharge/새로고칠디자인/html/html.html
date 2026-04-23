@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHARCAGE | 전기차 충전 예약</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- External CSS -->
+    <link rel="stylesheet" href="../css/css.css" />
+</head>
+<body>
+    <!-- NAV / 상단 메뉴바 -->
+    <header class="navbar">
+        <div class="nav-logo">CHARCAGE</div>
+        
+        <nav class="nav-links">
+            <div class="nav-item-wrapper" data-menu="1">
+                <a href="#" class="nav-item active">CHARCAGE</a>
+            </div>
+            <div class="nav-item-wrapper" data-menu="2">
+                <a href="#" class="nav-item">충전소찾기</a>
+            </div>
+            <div class="nav-item-wrapper" data-menu="3">
+                <a href="#" class="nav-item">멤버십</a>
+            </div>
+            <div class="nav-item-wrapper" data-menu="4">
+                <a href="#" class="nav-item">고객지원</a>
+            </div>
+        </nav>
+
+        <div class="nav-right">
+            <div class="nav-mypage">MY</div>
+        </div>
+    </header>
+
+    <!-- Full-width Mega Menu Panel (Navbar 밖에 배치하여 가려짐 방지) -->
+    <div class="mega-menu-panel">
+        <div class="mega-container">
+            <!-- Menu 1: CHARCAGE -->
+            <div class="mega-content" id="menu-1">
+                <div class="mega-column">
+                    <h3>브랜드 스토리</h3>
+                    <ul>
+                        <li><a href="#">CHARCAGE 소개</a></li>
+                        <li><a href="#">비전 & 가치</a></li>
+                        <li><a href="#">지속가능한 이동</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>이용 가이드</h3>
+                    <ul>
+                        <li><a href="#">앱 설치 및 가입</a></li>
+                        <li><a href="#">충전기 사용법</a></li>
+                        <li><a href="#">예약 시스템 안내</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>주요 서비스</h3>
+                    <ul>
+                        <li><a href="#">간편 결제 시스템</a></li>
+                        <li><a href="#">실시간 예약</a></li>
+                        <li><a href="#">충전 상태 알림</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menu 2: 충전소찾기 -->
+            <div class="mega-content" id="menu-2">
+                <div class="mega-column">
+                    <h3>위치 기반 검색</h3>
+                    <ul>
+                        <li><a href="#">내 주변 충전소</a></li>
+                        <li><a href="#">지역별 충전소</a></li>
+                        <li><a href="#">고속도로 충전소</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>충전소 타입</h3>
+                    <ul>
+                        <li><a href="#">급속 충전소</a></li>
+                        <li><a href="#">완속 충전소</a></li>
+                        <li><a href="#">테슬라 슈퍼차저</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>필터링 검색</h3>
+                    <ul>
+                        <li><a href="#">커넥터 타입별</a></li>
+                        <li><a href="#">주차 요금 무료</a></li>
+                        <li><a href="#">24시간 운영</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menu 3: 멤버십 -->
+            <div class="mega-content" id="menu-3">
+                <div class="mega-column">
+                    <h3>멤버십 가입</h3>
+                    <ul>
+                        <li><a href="#">회원 등급 안내</a></li>
+                        <li><a href="#">신규 가입 혜택</a></li>
+                        <li><a href="#">기업용 멤버십</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>포인트 & 쿠폰</h3>
+                    <ul>
+                        <li><a href="#">포인트 적립/사용</a></li>
+                        <li><a href="#">이달의 쿠폰</a></li>
+                        <li><a href="#">제휴사 포인트 전환</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>진행중인 이벤트</h3>
+                    <ul>
+                        <li><a href="#">출석 체크 이벤트</a></li>
+                        <li><a href="#">친구 초대 보너스</a></li>
+                        <li><a href="#">리뷰 작성 이벤트</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menu 4: 고객지원 -->
+            <div class="mega-content" id="menu-4">
+                <div class="mega-column">
+                    <h3>도움말</h3>
+                    <ul>
+                        <li><a href="#">자주 묻는 질문</a></li>
+                        <li><a href="#">공지사항</a></li>
+                        <li><a href="#">서비스 이용약관</a></li>
+                    </ul>
+                </div>
+                <div class="mega-column">
+                    <h3>문의하기</h3>
+                    <ul>
+                        <li><a href="#">1:1 온라인 문의</a></li>
+                        <li><a href="#">불편 신고 센터</a></li>
+                        <li><a href="#">비즈니스 제휴</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- 메인 동영상 화면 -->
+    <section class="hero">
+        <div class="video-background">
+             <video autoplay muted loop playsinline class="bg-video">
+                <source src="../kling_20260325_作品____________2680_0.mp4" type="video/mp4">
+             </video>
+        </div>
+        </div>
+        <div class="hero-content">
+            <h1 class="hero-title">친환경 이동을<br>더 똑똑하게</h1>
+            <p class="hero-sub">Save time, Reserve your charge</p>
+        </div>
+    </section>
+
+
+
+
+
+
+    <!-- 2번째 section -->
+    <div class="container">
+        <!-- 지도 검색 -->
+        <div class="search-section">
+            <form class="search">
+                <input type="search" class="search-box" placeholder="충전소 위치를 검색하세요" />
+                <button type="submit" class="search-btn">검색</button>
+            </form>
+        </div>
+
+        <div class="content-grid">
+            <div id="map"></div>
+            <div class="quick-menu">
+                <div class="menu-card charging">
+                    <div class="card-overlay"><span>충전소 찾기</span></div>
+                </div>
+                <div class="menu-card favorites">
+                    <div class="card-overlay"><span>즐겨찾기</span></div>
+                </div>
+                <div class="pay-row">
+                    <div class="menu-card evpay">
+                        <div class="card-overlay"><span>EV PAY</span></div>
+                    </div>
+                    <div class="menu-card qnnfc">
+                        <div class="card-overlay"><span>QR/NFC 스캔</span></div>
+                    </div>
+                </div>
+                <div class="menu-card community">
+                    <div class="card-overlay"><span>커뮤니티</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2번쨰 section 끝나는 부분 -->
+
+
+
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="../js/js.js"></script>
+</body>
+</html>
