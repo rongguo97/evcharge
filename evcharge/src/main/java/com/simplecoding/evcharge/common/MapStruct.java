@@ -5,6 +5,8 @@ package com.simplecoding.evcharge.common;
 
 import com.simplecoding.evcharge.auth.dto.MemberDto;
 import com.simplecoding.evcharge.auth.entity.Member;
+import com.simplecoding.evcharge.reservation.dto.ReservationDto;
+import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.station.dto.StationDto;
 import com.simplecoding.evcharge.station.entity.Station;
 import org.mapstruct.*;
@@ -41,9 +43,14 @@ public interface MapStruct {
     StationDto toDto(Station station);
 
     // 3. 수정 시 사용 (Dirty Checking용)
-    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
-    @Mapping(source = "lng", target = "lng")
+//    @Mapping(source = "statUpdateDatetime", target = "statUpdateDatetime", dateFormat = "yyyyMMddHHmmss")
+//    @Mapping(source = "lng", target = "lng")
+//    @Mapping(target = "expectedEndTime", source = "endTime")
+    ReservationDto toDto(Reservation reservation);
+    Reservation toEntity(ReservationDto dto);
     void updateFromDto(StationDto stationDto, @MappingTarget Station station);
+
+
 }
 
 

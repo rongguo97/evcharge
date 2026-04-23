@@ -38,10 +38,6 @@ public class StationService {
             return;
         }
 
-        // [중요] 스케줄러가 돌 때마다 데이터가 중복되지 않도록 기존 데이터 삭제
-        stationRepository.deleteAll();
-        log.info("기존 충전소 데이터를 삭제했습니다.");
-
         for (JsonNode data : nodes) {
             try {
                 StationDto dto = new StationDto();
@@ -75,6 +71,13 @@ public class StationService {
                 // dto.getStatUpdateDatetime()이 null이면 MapStruct의 dateFormat 변환 시
                 // 에러가 날 수 있으므로, try-catch로 한 번 더 감싸서 안전하게 처리합니다.
                 Station entity = struct.toEntity(dto);
+                Station existingStation = stationRepository.findByStationNameAndChargerId(dto.getStationName(), dto.getChargerId());
+                if (existingStation != null) {
+                    // 👉 이미 존재하는 데이터면, 기존의 PK(고유 ID)를 덮어씌워 줍니다.
+                    // JPA는 객체에 식별자(ID)가 이미 있으면 Insert 대신 'Update(수정)' 쿼리를 실행합니다!
+                    entity.setStationId(existingStation.getStationId());
+                }
+                // 존재하면 Update, 없으면 Insert
                 stationRepository.save(entity);
 
             } catch (Exception e) {
@@ -82,6 +85,7 @@ public class StationService {
                 log.warn("데이터 개별 처리 중 오류 발생 (무시하고 다음 데이터 진행): {}", e.getMessage());
             }
         }
+        log.info("한전 충전소 데이터 갱신(Upsert) 완료");
     }
     /**
      * [변환 로직] 프론트의 한글 명칭을 DB 코드로 변환
