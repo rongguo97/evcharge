@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 // 만약 reactIp가 "*"라면 allowCredentials(true)와 함께 쓸 수 없음.
                 // 그럴 경우 .allowedOriginPatterns(reactIp)로 바꾸는 걸 AI가 추천.
-                .allowedOrigins(reactIp)
+                .allowedOrigins("http://localhost:5173")
                 .allowedMethods(
                         HttpMethod.GET.name(),
                         HttpMethod.POST.name(),
