@@ -20,7 +20,7 @@ public class WalletController {
     private final WalletService walletService;
 
     @Operation(summary = "지갑 조회", description = "인증된 사용자의 적립금 및 포인트 잔액을 조회합니다.")
-    @GetMapping("/my")
+    @GetMapping("/{email}")
     public ResponseEntity<ApiResponse<WalletDto>> getMyWallet(Authentication authentication) {
         String email = authentication.getName();
         Wallet wallet = walletService.getOrCreateWallet(email);

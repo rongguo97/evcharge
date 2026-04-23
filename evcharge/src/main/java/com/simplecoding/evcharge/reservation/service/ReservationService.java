@@ -38,21 +38,30 @@ public class ReservationService {
         return repository.findReservationList(email, status, pageable);
     }
 
+
     @Transactional
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime, LocalDateTime endTime) {
-        // [추가] 0. 예약 가능 시간 검증 (현재 시간 + 10분 여유 체크)
+        // 0. 예약 가능 시간 검증
         if (startTime.isBefore(LocalDateTime.now().plusMinutes(10))) {
             throw new IllegalArgumentException("예약은 최소 시작 10분 전까지만 가능합니다.");
         }
+
         // 1. 충전소 존재 확인
         Station station = stationRepository.findById(stationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소 ID입니다: " + stationId));
 
-        // 3. 중복 예약 체크
+        // 2. 중복 예약 체크
         String rDate = startTime.toLocalDate().toString();
         if (!repository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
             throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
-        }
+        } // 📍 중복 체크는 여기서 끝내야 합니다!
+
+        // 3. 📍 결제 금액 계산 (중복이 없을 때만 여기로 내려옵니다)
+        FeeResult estimate = calculateEstimatedFee(stationId, startTime, endTime);
+        int totalFee = estimate.getBaseFee();
+
+        // 4. 📍 실제 포인트 차감
+        walletService.spendReserveFund(email, (long) totalFee); // 📍 세미콜론 추가 완료!
 
         // 5. 예약 저장
         Reservation reservation = Reservation.builder()
@@ -61,7 +70,7 @@ public class ReservationService {
                 .startTime(startTime)
                 .endTime(endTime)
                 .rDate(rDate)
-                .status("RESERVED") // 📍 문자열 상태값 적용 완료!
+                .status("PAID") // 📍 결제가 끝났으니 "PAID"로 저장하는 게 더 정확합니다!
                 .build();
 
         return repository.save(reservation);
@@ -201,5 +210,36 @@ public class ReservationService {
 
         // 결제 성공 가정
         reservation.setStatus("COMPLETED");
+    }
+    // 1. 📍 예상 요금 계산 메서드 (리턴 타입을 FeeResult로 명시!)
+    public FeeResult calculateEstimatedFee(Long stationId, LocalDateTime start, LocalDateTime end) {
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소입니다."));
+
+        long minutes = java.time.Duration.between(start, end).toMinutes();
+        String chargerType = station.getChargerType();
+
+        int pricePer10Min = 1000;
+        long fullChargeMinutes = 60;
+
+        if (chargerType != null) {
+            String typeStr = chargerType.toUpperCase().replace(" ", "");
+            if (typeStr.contains("100KW") || typeStr.contains("급속")) {
+                pricePer10Min = 2000;
+                fullChargeMinutes = 40;
+            } else if (typeStr.contains("50KW")) {
+                pricePer10Min = 1500;
+                fullChargeMinutes = 70;
+            } else if (typeStr.contains("완속") || typeStr.contains("7KW")) {
+                pricePer10Min = 500;
+                fullChargeMinutes = 240;
+            }
+        }
+
+        double pricePerMinute = pricePer10Min / 10.0;
+        long normalMinutes = Math.min(minutes, fullChargeMinutes);
+        int baseFee = (int) Math.round(normalMinutes * pricePerMinute);
+
+        return new FeeResult(minutes, baseFee, 0); // 📍 FeeResult 객체 반환
     }
 }

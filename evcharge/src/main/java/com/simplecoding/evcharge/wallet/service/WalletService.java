@@ -68,4 +68,5 @@ public class WalletService {
         Wallet wallet = getOrCreateWallet(email);
         wallet.convertPointToReserveFund(amount);
     }
+
 }
