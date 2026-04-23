@@ -39,7 +39,7 @@ public class MemberController {
                 .secure(false)                 // TODO: HTTPS 환경이라면 true로 변경하세요.
                 .path("/")                     // 모든 경로에서 쿠키 유효
                 .maxAge(60 * 60 * 24)          // 쿠키 수명 (예: 1일)
-                .sameSite("Lax")
+//                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.ok()
@@ -83,8 +83,16 @@ public class MemberController {
      */
     @GetMapping("/me")
     public ResponseEntity<MemberDto> me(Authentication authentication) {
+        // 1. 인증 객체에서 이메일(ID) 추출
         String email = authentication.getName();
-        log.info("인증된 사용자 [{}] 접근 완료", email);
-        return ResponseEntity.ok(MemberDto.builder().email(email).build());
+
+        // 2. DB에서 해당 이메일로 회원 정보를 조회 (Service 이용)
+        // 이 단계에서 DB에 저장된 memberName, role 등이 담긴 DTO를 가져옵니다.
+        MemberDto memberDto = service.findByEmail(email);
+
+        log.info("인증된 사용자 [{}] 정보 반환 완료", email);
+
+        // 3. DB에서 가져온 데이터(이름 포함)를 반환
+        return ResponseEntity.ok(memberDto);
     }
 }
