@@ -26,10 +26,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReservationController {
 
-    // 📍 중복되었던 서비스를 하나로 통일했습니다!
     private final ReservationService reservationService;
 
-    @Operation(summary = "예약 추가 (프론트 연동용)", description = "충전소 ID와 시작/종료 시간을 받아 예약을 생성합니다.")
+    /**
+     * [POST] 신규 예약 등록 (결제 포함)
+     */
+    @Operation(summary = "예약 추가", description = "충전소 ID와 시간을 받아 예약 및 결제를 진행합니다.")
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<Long>> addReservation(
             @RequestParam String email,
@@ -42,21 +44,32 @@ public class ReservationController {
             return new ResponseEntity<>(new ApiResponse<>(
                     true, "예약이 성공적으로 완료되었습니다.", res.getReservationId(), 0, 0
             ), HttpStatus.CREATED);
-
         } catch (IllegalStateException e) {
-            return new ResponseEntity<>(new ApiResponse<>(
-                    false, e.getMessage(), null, 0, 0
-            ), HttpStatus.CONFLICT);
+            return new ResponseEntity<>(new ApiResponse<>(false, e.getMessage(), null, 0, 0), HttpStatus.CONFLICT);
         } catch (Exception e) {
-            // 📍 서버 에러 발생 시 무조건 콘솔에 원인을 출력하도록 함정 설치!
             e.printStackTrace();
-            return new ResponseEntity<>(new ApiResponse<>(
-                    false, "서버 오류: " + e.getMessage(), null, 0, 0
-            ), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ApiResponse<>(false, "서버 오류: " + e.getMessage(), null, 0, 0), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @Operation(summary = "날짜 및 시간 별 예약 확인")
+    /**
+     * [GET] 📍 예상 요금 조회 (중요: /{reservationId} 보다 위에 위치)
+     */
+    @Operation(summary = "예약 전 예상 요금 조회", description = "예약 확정 전 미리 요금을 계산합니다.")
+    @GetMapping("/estimate-fee")
+    public ResponseEntity<ApiResponse<FeeResult>> estimateFee(
+            @RequestParam Long stationId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+
+        FeeResult result = (FeeResult) reservationService.calculateEstimatedFee(stationId, startTime, endTime);
+        return ResponseEntity.ok(new ApiResponse<>(true, "예상 요금 계산 성공", result, 0, 0));
+    }
+
+    /**
+     * [GET] 📍 예약 가능 슬롯 확인 (중요: /{reservationId} 보다 위에 위치)
+     */
+    @Operation(summary = "날짜별 예약 확인")
     @GetMapping("/slots")
     public ResponseEntity<List<String>> getReservedSlots(
             @RequestParam("chargerId") Long chargerId,
@@ -66,6 +79,9 @@ public class ReservationController {
         return ResponseEntity.ok(reservedSlots);
     }
 
+    /**
+     * [GET] 예약 목록 조회
+     */
     @Operation(summary = "예약 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<List<ReservationDto>>> getList(
@@ -80,6 +96,21 @@ public class ReservationController {
         return ResponseEntity.ok(response);
     }
 
+    // --- 여기서부터는 /{reservationId} 가 포함된 경로들 (가장 구체적인 것부터 나열) ---
+
+    /**
+     * [GET] 예약 완료 후 요금 조회
+     */
+    @Operation(summary = "예약 완료 후 최종 요금 조회")
+    @GetMapping("/{reservationId}/fee")
+    public ResponseEntity<ApiResponse<FeeResult>> getFee(@PathVariable Long reservationId) {
+        FeeResult result = (FeeResult) reservationService.calculateFee(reservationId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "요금 계산 성공", result, 0, 0));
+    }
+
+    /**
+     * [GET] 예약 상세 조회
+     */
     @Operation(summary = "예약 상세 조회")
     @GetMapping("/{reservationId}")
     public ResponseEntity<ApiResponse<ReservationDto>> detail(@PathVariable Long reservationId) {
@@ -87,6 +118,9 @@ public class ReservationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "상세 조회 성공", dto, 0, 0));
     }
 
+    /**
+     * [PUT] 예약 취소
+     */
     @Operation(summary = "예약 취소")
     @PutMapping("/{reservationId}/cancel")
     public ResponseEntity<Void> cancel(@PathVariable Long reservationId) {
@@ -94,6 +128,9 @@ public class ReservationController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * [PUT] 충전 시작
+     */
     @Operation(summary = "충전 시작")
     @PutMapping("/{reservationId}/start")
     public ResponseEntity<Void> start(@PathVariable Long reservationId) {
@@ -101,6 +138,9 @@ public class ReservationController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * [PUT] 충전 종료
+     */
     @Operation(summary = "충전 종료")
     @PutMapping("/{reservationId}/end")
     public ResponseEntity<Void> end(@PathVariable Long reservationId) {
@@ -108,18 +148,14 @@ public class ReservationController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * [POST] 결제 처리
+     */
     @Operation(summary = "결제 처리")
     @PostMapping("/{reservationId}/payment")
     public ResponseEntity<Void> payment(@PathVariable Long reservationId,
                                         @RequestBody Object paymentRequest) {
         reservationService.pay(reservationId, paymentRequest);
         return ResponseEntity.ok().build();
-    }
-
-    @Operation(summary = "요금 조회")
-    @GetMapping("/{reservationId}/fee")
-    public ResponseEntity<ApiResponse<FeeResult>> getFee(@PathVariable Long reservationId) {
-        FeeResult result = (FeeResult) reservationService.calculateFee(reservationId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "요금 계산 성공", result, 0, 0));
     }
 }

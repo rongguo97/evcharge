@@ -16,7 +16,7 @@ public class Wallet {
     private Long walletId;
 
     @Builder.Default
-    @Column(name = "RESERVEFUND", nullable = false)
+    @Column(name = "RESERVE_FUND", nullable = false)
     private Long reserveFund = 0L;
 
     @Builder.Default
