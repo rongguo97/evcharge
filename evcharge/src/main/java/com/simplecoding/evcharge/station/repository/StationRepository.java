@@ -52,4 +52,6 @@ public interface StationRepository extends JpaRepository<Station, Long> {
             @Param("userLat") Double userLat,
             @Param("userLng") Double userLng,
             @Param("radius") Double radius);
+//스케쥴러 update를 위해 충전소이름과 충전기ID로 기존 데이터를 조회
+    Station findByStationNameAndChargerId(String stationName, Long chargerId);
 }
