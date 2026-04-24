@@ -46,5 +46,11 @@ public class Reservation {
     @Column(name = "R_Date", length = 20)
     private String rDate;
 
-
+    @PostLoad
+    public void cleanUpDate() {
+        // DB에서 읽어온 rDate에 " 00:00:00" 같은 꼬리가 붙어있으면 10글자("YYYY-MM-DD")만 남기고 싹둑 자릅니다!
+        if (this.rDate != null && this.rDate.length() > 10) {
+            this.rDate = this.rDate.substring(0, 10);
+        }
+    }
 }

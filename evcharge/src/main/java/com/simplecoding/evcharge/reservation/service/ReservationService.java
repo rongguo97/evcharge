@@ -70,7 +70,7 @@
                     .startTime(startTime)
                     .endTime(endTime)
                     .rDate(rDate)
-                    .status("PAID") // 📍 결제가 끝났으니 "PAID"로 저장하는 게 더 정확합니다!
+                    .status("RESERVED") // 📍 결제가 끝났으니 "PAID"로 저장하는 게 더 정확합니다!
                     .build();
 
             return repository.save(reservation);
@@ -130,16 +130,28 @@
         // 📍 2. 충전 종료 로직 수정 완료
         @jakarta.transaction.Transactional
         public void endCharging(Long reservationId) {
-            Reservation reservation = repository.findById(reservationId)
-                    .orElseThrow(() -> new RuntimeException("예약 없음"));
+            Reservation res = repository.findById(reservationId).orElseThrow();
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime plannedEnd = res.getEndTime();
 
-            // 충전 중일 때만 종료 가능하도록 검증
-            if (!"CHARGING".equals(reservation.getStatus())) {
-                throw new RuntimeException("충전 중인 상태에서만 종료할 수 있습니다.");
+            // 📍 1. 시간 차이 계산 (분 단위)
+            long diffMinutes = java.time.Duration.between(plannedEnd, now).toMinutes();
+
+            if (diffMinutes < 0) {
+                // [CASE 1] 일찍 종료 (PlannedEnd가 더 미래임) -> 남은 시간만큼 페이백
+                long unusedMinutes = Math.abs(diffMinutes);
+                long refundAmount = unusedMinutes * 100; // 분당 100원 환불 예시
+                walletService.chargeReserveFund(res.getEmail(), refundAmount); // 지갑에 충전
+                System.out.println("✅ 조기 종료: " + unusedMinutes + "분 남음, " + refundAmount + "원 환불 완료");
+
+            } else if (diffMinutes > 0) {
+                // [CASE 2] 늦게 종료 -> 초과 시간만큼 추가 부과
+                long penaltyAmount = diffMinutes * 150; // 연체는 더 비싸게(분당 150원) 예시
+                walletService.spendReserveFund(res.getEmail(), penaltyAmount); // 지갑에서 차감
+                System.out.println("⚠️ 지연 종료: " + diffMinutes + "분 초과, " + penaltyAmount + "원 추가 결제");
             }
 
-            // 상태를 충전 완료(COMPLETED)로 변경
-            reservation.setStatus("COMPLETED");
+            res.setStatus("COMPLETED");
         }
 
         // 📍 3. 요금 계산 로직 수정 완료 (에러 없는 DB 타입 조회 방식으로 복구)
@@ -241,5 +253,38 @@
             int baseFee = (int) Math.round(normalMinutes * pricePerMinute);
 
             return new FeeResult(minutes, baseFee, 0); // 📍 FeeResult 객체 반환
+        }
+        // ReservationService.java
+
+        @Transactional
+        public void cancelReservations() {
+            // 현재 시간에서 10분을 뺀 시간을 기준으로 잡습니다.
+            // 즉, "시작한 지 10분이 넘은" 예약들을 찾습니다.
+            LocalDateTime limitTime = LocalDateTime.now().minusMinutes(10);
+
+            List<Reservation> expiredList = repository.findExpiredReservations(limitTime);
+
+            for (Reservation res : expiredList) {
+                // 📍 상태 변경: 'RESERVED' -> 'CANCELLED'
+                res.setStatus("CANCELLED");
+
+                // (선택사항) 로그를 남기거나, 유저에게 알림 메일을 보낼 수도 있습니다.
+                System.out.println("예약 번호 " + res.getReservationId() + "번이 노쇼(No-show)로 자동 취소되었습니다.");
+            }
+        }
+        // ReservationService.java 에 추가
+
+        /**
+         * 마이페이지용: 현재 진행 중인 가장 빠른 예약 1건 조회
+         */
+        public ReservationDto findCurrentReservationDto(String email) {
+            List<Reservation> list = repository.findCurrentReservationByEmail(email);
+
+            if (list.isEmpty()) {
+                return null;
+            }
+
+            // 📍 엔티티(Entity)를 그대로 주지 않고 DTO로 예쁘게 변환해서 반환!
+            return mapper.toDto(list.get(0));
         }
     }

@@ -102,4 +102,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
           AND r.status = 'CHARGING'
     """)
     List<Reservation> findOverstayTargets(@Param("now") LocalDateTime now);
+
+    // 📍 상태가 'RESERVED'이면서 시작시간(startTime)에 10분을 더한 시간이 현재시간보다 이전인 것들 조회
+    @Query("SELECT r FROM Reservation r WHERE r.status = 'RESERVED' AND r.startTime < :limitTime")
+    List<Reservation> findExpiredReservations(@Param("limitTime") LocalDateTime limitTime);
+
+    // ReservationRepository.java 에 추가
+
+    // ReservationRepository.java 에 추가
+    @Query("SELECT r FROM Reservation r " +
+            "WHERE r.email = :email " +
+            "AND r.status IN ( 'RESERVED', 'CHARGING') " +
+            "ORDER BY r.startTime ASC")
+    List<Reservation> findCurrentReservationByEmail(@Param("email") String email);
 }
