@@ -55,7 +55,7 @@ public class MemberService {
      * 전부 취소(Rollback)해서 데이터 꼬임을 방지합니다.
      */
     @Transactional
-    public void save(MemberDto memberDto) {
+    public void register(MemberDto memberDto) {
         // 1. 중복 체크
         if (repository.existsById(memberDto.getEmail())) {
             throw new RuntimeException(util.getMessage("errors.register"));

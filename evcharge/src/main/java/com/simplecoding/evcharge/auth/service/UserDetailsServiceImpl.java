@@ -25,7 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // 1) DB에서 계정 확인 (PK가 email이므로 findById 사용)
-        Member member = repository.findById(email)
+        Member member = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException(util.getMessage("errors.not.found")));
 
         // 2) 권한 객체 생성 (우리 엔티티의 codeName 필드 사용)
