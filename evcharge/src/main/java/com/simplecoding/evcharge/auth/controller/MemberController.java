@@ -17,6 +17,17 @@ public class MemberController {
 
     private final MemberService service;
 
+    // 📍 [추가] 회원가입 메서드
+    @PostMapping("/auth/register")
+    public ResponseEntity<String> register(@RequestBody MemberDto memberDto) {
+        log.info("회원가입 요청: {}", memberDto.getEmail());
+
+        // 서비스의 회원가입 로직 호출 (메서드 명은 프로젝트 상황에 맞게 수정하세요)
+        service.register(memberDto);
+
+        return ResponseEntity.ok("회원가입 성공");
+    }
+
     @PostMapping("/auth/login")
     public ResponseEntity<MemberDto> me(@org.springframework.web.bind.annotation.RequestBody MemberDto memberDto) {
         // 1. JWT 생성
