@@ -1,6 +1,7 @@
     package com.simplecoding.evcharge.reservation.controller;
 
     import com.simplecoding.evcharge.common.ApiResponse;
+    import com.simplecoding.evcharge.common.dto.CMRespDto;
     import com.simplecoding.evcharge.reservation.dto.FeeResult;
     import com.simplecoding.evcharge.reservation.dto.ReservationDto;
     import com.simplecoding.evcharge.reservation.entity.Reservation;
@@ -15,6 +16,7 @@
     import org.springframework.format.annotation.DateTimeFormat;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
+    import org.springframework.security.core.annotation.AuthenticationPrincipal;
     import org.springframework.web.bind.annotation.*;
 
     import java.time.LocalDate;
@@ -179,5 +181,21 @@
                     currentDto,
                     0, 0
             ));
+        }
+        @GetMapping("/history")
+        public CMRespDto<List<ReservationDto>> getHistory(Authentication authentication) {
+            // 📍 1. Authentication 객체에서 안전하게 이메일(Username) 꺼내기
+            if (authentication == null) {
+                throw new RuntimeException("로그인 정보가 없습니다.");
+            }
+            String email = authentication.getName();
+            System.out.println("조회하려는 이메일: " + email); // 서버 콘솔에서 확인용
+
+            // 📍 2. 서비스 호출
+            List<ReservationDto> history = reservationService.getReservationHistory(email);
+
+            // 📍 3. 리액트가 기다리는 'CMRespDto' 상자에 담아서 응답!
+            // (code: 1, msg: "성공", result: 데이터리스트)
+            return new CMRespDto<>(1, "조회 성공", history);
         }
     }
