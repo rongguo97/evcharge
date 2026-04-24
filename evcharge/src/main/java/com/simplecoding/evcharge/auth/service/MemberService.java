@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class MemberService {
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManagerBuilder managerBuilder;
+    private final MemberRepository memberRepository;
 
     /**
      * 1) 로그인: 인증 후 웹토큰(JWT) 반환
@@ -72,5 +74,21 @@ public class MemberService {
         wallet.setReserveFund(0L);          // 초기 적립금 0원
 
         walletRepository.save(wallet);      // 지갑 저장
+    }
+    /**
+     * 이메일로 회원 정보를 조회하여 DTO로 반환합니다.
+     */
+    public MemberDto findByEmail(String email) {
+        // 1. DB에서 해당 이메일의 엔티티를 찾습니다.
+        // 없으면 에러를 발생시킵니다 (Optional 처리)
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + email));
+
+        // 조회된 member 엔티티를 DTO로 변환해서 반환
+        return MemberDto.builder()
+                .email(member.getEmail())
+                .memberName(member.getMemberName()) // 드디어 이름이 담깁니다!
+                .build();
     }
 }

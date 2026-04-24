@@ -68,5 +68,22 @@
             Wallet wallet = getOrCreateWallet(email);
             wallet.convertPointToReserveFund(amount);
         }
+        @Transactional
+        public void useBalance(String email, Long amount) {
+            // 1. DB에서 지갑 조회 (필드명이 email 인 것 확인!)
+            Wallet wallet = walletRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("지갑을 찾을 수 없습니다. email: " + email));
 
+            // 2. 현재 적립금(reserveFund) 확인 (330,000원 들어있는 곳)
+            Long currentFund = wallet.getReserveFund() != null ? wallet.getReserveFund() : 0L;
+
+            if (currentFund < amount) {
+                throw new IllegalStateException("적립금이 부족합니다. 충전 후 이용해주세요.");
+            }
+
+            // 3. 적립금(reserveFund)에서 차감
+            wallet.setReserveFund(currentFund - amount);
+
+            // @Transactional 덕분에 별도의 save 호출 없이도 DB에 반영됩니다.
+        }
     }
