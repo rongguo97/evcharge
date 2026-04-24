@@ -19,4 +19,5 @@ public class MemberDto {
     private String carNumber;   // 차량 번호 추가
     private String phoneNumber; // 전화번호 추가
     private String role = "ROLE_USER";
+    private String accessToken;
 }
