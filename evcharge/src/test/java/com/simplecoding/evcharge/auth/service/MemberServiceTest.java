@@ -37,6 +37,6 @@ class MemberServiceTest {
         dto.setMemberCode("2222a");
         dto.setCarNumber("2222이2222");        // 참조키: 사원테이블에 있는 걸로 해주세요
 //        2) 저장
-        service.save(dto);
+        service.register(dto);
     }
 }
