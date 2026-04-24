@@ -6,7 +6,9 @@ import com.simplecoding.evcharge.common.CommonUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -93,8 +95,15 @@ public class MemberController {
         }
 
         String email = authentication.getName();
+        log.info("조회 요청 이메일: {}", email);
+
+        // 2. DB에서 유저 정보 조회
         MemberDto memberDto = service.findByEmail(email);
+
+        // 3. 📍 로그를 찍어서 서버 콘솔에 ROLE이 찍히는지 확인하세요!
+        log.info("DB에서 가져온 ROLE: {}", memberDto.getRole());
 
         return ResponseEntity.ok(memberDto);
     }
+
 }
