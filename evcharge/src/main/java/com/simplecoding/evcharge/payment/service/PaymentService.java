@@ -1,5 +1,6 @@
 package com.simplecoding.evcharge.payment.service;
 
+import com.simplecoding.evcharge.payment.dto.PaymentDto;
 import com.simplecoding.evcharge.payment.entity.Payment;
 import com.simplecoding.evcharge.payment.repository.PaymentRepository;
 import com.simplecoding.evcharge.reservation.entity.Reservation; // 💡 임포트 추가
@@ -7,6 +8,9 @@ import com.simplecoding.evcharge.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,5 +63,35 @@ public class PaymentService {
                 .build();
 
         paymentRepository.save(payment);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PaymentDto> getPaymentHistory(String email) {
+        // 1. DB에서 내 이메일로 된 모든 결제 이력을 최신순으로 가져옵니다.
+        List<Payment> payments = paymentRepository.findByEmailOrderByPayIdDesc(email);
+
+        // 2. Entity를 DTO로 변환해서 반환합니다.
+        return payments.stream().map(payment -> {
+            String stationName = null;
+            Long resId = null;
+
+            // 💡 예약 정보(RESERVE_USAGE)가 연결되어 있다면 충전소 이름을 꺼내옵니다.
+            if (payment.getReservation() != null) {
+                resId = payment.getReservation().getReservationId();
+                if (payment.getReservation().getStation() != null) {
+                    stationName = payment.getReservation().getStation().getStationName();
+                }
+            }
+
+            return PaymentDto.builder()
+                    .payId(payment.getPayId()) // PK 변수명(id)에 맞춰서 작성해주세요!
+                    .amount(payment.getAmount())
+                    .paymentType(payment.getPaymentType())
+                    .email(payment.getEmail())
+                    .createdAt(payment.getCreatedAt()) // 엔티티에 시간 필드가 있다면 활성화
+                    .reservationId(resId)
+                    .stationName(stationName)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

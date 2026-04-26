@@ -64,6 +64,14 @@ public class ReservationService {
                 .status("RESERVED")
                 .build();
 
+        // 2. 기존 로직: 예약을 DB에 저장
+        Reservation savedReservation = repository.save(reservation);
+
+        // 💡 3. 신규 로직: 포인트 차감이 성공하고 예약이 저장된 직후, 결제 내역(영수증)을 남깁니다!
+        if (totalFee > 0) {
+            paymentService.saveUsageHistory(email, (long) totalFee, savedReservation);
+        }
+
         return repository.save(reservation);
     }
 
