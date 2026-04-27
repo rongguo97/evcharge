@@ -9,6 +9,9 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
+    // 📍 [추가] 관리자용: 전체 결제 내역을 최신순(생성일 기준)으로 조회
+    List<Payment> findAllByOrderByCreatedAtDesc();
+
     /**
      * 1) 회원별 결제 내역 최신순 조회
      * 필드명이 createdAt 이므로 메서드명도 이에 맞춰야 함
