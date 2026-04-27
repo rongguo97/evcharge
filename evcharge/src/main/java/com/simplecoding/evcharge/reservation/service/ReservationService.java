@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private final ReservationRepository repository; // 📍 소문자 'repository'로 통일
+    private final ReservationRepository repository;
     private final StationRepository stationRepository;
     private final MapStruct mapper;
     private final PaymentService paymentService;
@@ -35,10 +35,18 @@ public class ReservationService {
         return repository.findReservationList(email, status, pageable);
     }
 
+    /**
+     * [POST] 신규 예약 등록 (결제 및 이용 내역 포함)
+     */
     @Transactional
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<String> activeStatuses = List.of("RESERVED", "CHARGING");
+            List<Reservation> userActiveReservations = repository.findByEmailAndStatusIn(email, activeStatuses);
         if (startTime.isBefore(LocalDateTime.now().plusMinutes(10))) {
             throw new IllegalArgumentException("예약은 최소 시작 10분 전까지만 가능합니다.");
+        }
+        if (!userActiveReservations.isEmpty()) {
+            throw new IllegalStateException("이미 진행 중인 예약이나 충전 내역이 있습니다.");
         }
 
         Station station = stationRepository.findById(stationId)
@@ -52,9 +60,9 @@ public class ReservationService {
         FeeResult estimate = calculateEstimatedFee(stationId, startTime, endTime);
         int totalFee = estimate.getBaseFee();
 
+        // 1. 지갑 잔액 차감
         walletService.useBalance(email, (long) totalFee);
 
-        // 📍 엔티티 빌더에서 stationName을 빼고 station 객체만 전달합니다.
         Reservation reservation = Reservation.builder()
                 .email(email)
                 .station(station)
@@ -64,15 +72,15 @@ public class ReservationService {
                 .status("RESERVED")
                 .build();
 
-        // 2. 기존 로직: 예약을 DB에 저장
+        // 2. 예약 저장
         Reservation savedReservation = repository.save(reservation);
 
-        // 💡 3. 신규 로직: 포인트 차감이 성공하고 예약이 저장된 직후, 결제 내역(영수증)을 남깁니다!
+        // 3. 결제 내역 저장 (타입: RESERVE_USAGE 명시) 📍 수정됨
         if (totalFee > 0) {
-            paymentService.saveUsageHistory(email, (long) totalFee, savedReservation);
+            paymentService.saveUsageHistory(email, (long) totalFee, savedReservation, "RESERVE_USAGE");
         }
 
-        return repository.save(reservation);
+        return savedReservation;
     }
 
     public ReservationDto getReservation(Long id) {
@@ -80,7 +88,6 @@ public class ReservationService {
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
 
         ReservationDto dto = mapper.toDto(reservation);
-        // 💡 매퍼가 채워주지 못하는 조인 정보(이름)를 수동으로 보충합니다.
         if (reservation.getStation() != null) {
             dto.setStationName(reservation.getStation().getStationName());
         }
@@ -97,14 +104,42 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * [PUT] 예약 취소 (환불 및 환불 내역 포함)
+     */
     @Transactional
     public void cancelReservation(Long reservationId) {
         Reservation reservation = repository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("예약 없음"));
+                .orElseThrow(() -> new RuntimeException("예약 정보를 찾을 수 없습니다."));
 
         if (!"RESERVED".equals(reservation.getStatus())) {
-            throw new RuntimeException("예약 대기 상태인 경우에만 취소할 수 있습니다.");
+            throw new RuntimeException("이미 취소되었거나 완료된 예약은 취소할 수 없습니다.");
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(reservation.getStartTime().minusMinutes(10))) {
+            throw new RuntimeException("예약 취소는 시작 시간 10분 전까지만 가능합니다.");
+        }
+
+        // 💰 [환불 로직 시작] 📍 수정됨
+        FeeResult feeResult = calculateEstimatedFee(
+                reservation.getStation().getStationId(),
+                reservation.getStartTime(),
+                reservation.getEndTime()
+        );
+
+        int refundAmount = feeResult.getBaseFee();
+
+        if (refundAmount > 0) {
+            // 1. 지갑 잔액 복구
+            walletService.chargeReserveFund(reservation.getEmail(), (long) refundAmount);
+
+            // 2. 이용 내역에 환불 기록 추가 (타입: REFUND 명시)
+            paymentService.saveUsageHistory(reservation.getEmail(), (long) refundAmount, reservation, "REFUND");
+        }
+        // [환불 로직 종료]
+
+        // 4. 예약 상태 변경 (Dirty Checking)
         reservation.setStatus("CANCELLED");
     }
 
@@ -145,7 +180,7 @@ public class ReservationService {
         res.setStatus("COMPLETED");
     }
 
-    public Object calculateFee(Long reservationId) {
+    public FeeResult calculateFee(Long reservationId) {
         Reservation reservation = repository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
 
@@ -238,7 +273,6 @@ public class ReservationService {
 
         Reservation res = list.get(0);
         ReservationDto dto = mapper.toDto(res);
-        // 💡 조인된 충전소 이름을 DTO에 직접 넣어줍니다.
         if (res.getStation() != null) {
             dto.setStationName(res.getStation().getStationName());
             dto.setStationId(res.getStation().getStationId());
@@ -247,7 +281,6 @@ public class ReservationService {
     }
 
     public List<ReservationDto> getReservationHistory(String email) {
-        // 📍 'repository' (소문자) 호출 및 JOIN FETCH 활용
         List<Reservation> reservations = repository.findMyReservations(email);
 
         return reservations.stream()
@@ -259,10 +292,8 @@ public class ReservationService {
                             .endTime(res.getEndTime())
                             .status(res.getStatus())
                             .rDate(res.getRDate())
-                            .stationName(res.getStation() != null ? res.getStation().getStationName() : "정보 없음")
                             .build();
 
-                    // 💡 핵심: 조인된 Station 엔티티에서 정보를 안전하게 꺼내옵니다.
                     if (res.getStation() != null) {
                         dto.setStationName(res.getStation().getStationName());
                         dto.setAddress(res.getStation().getAddress());
