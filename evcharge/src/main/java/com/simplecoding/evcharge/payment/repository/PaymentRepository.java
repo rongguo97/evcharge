@@ -24,4 +24,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     // 나중에 리액트에서 "더보기" 기능을 만들 때 사용하세요!
     //    Page<Payment> findByEmailOrderByCreatedAtDesc(String email, Pageable pageable);
+
+    // 💡 이메일로 결제 내역 조회 (ID를 기준으로 최신순 정렬)
+    // 만약 엔티티에 createdAt(생성일시)이 있다면 findByEmailOrderByCreatedAtDesc 도 좋습니다.
+    List<Payment> findByEmailOrderByPayIdDesc(String email);
 }

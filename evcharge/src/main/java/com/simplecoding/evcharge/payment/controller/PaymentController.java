@@ -1,6 +1,7 @@
 package com.simplecoding.evcharge.payment.controller;
 
 import com.simplecoding.evcharge.common.ApiResponse;
+import com.simplecoding.evcharge.payment.dto.PaymentDto;
 import com.simplecoding.evcharge.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication; // 💡 추가
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Payment Controller", description = "결제 및 충전 API")
 @RestController
@@ -34,6 +37,21 @@ public class PaymentController {
         paymentService.chargeReserveFundWithHistory(email, amount);
 
         ApiResponse<String> response = new ApiResponse<>(true, "적립금 충전 및 결제 내역 저장 완료", "SUCCESS", 0, 0);
+        return ResponseEntity.ok(response);
+    }
+    /**
+     * 결제 내역 조회 (마이페이지용)
+     */
+    @Operation(summary = "결제 내역 조회", description = "인증된 사용자의 결제/충전 내역을 조회합니다.")
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<List<PaymentDto>>> getPaymentHistory(Authentication authentication) {
+        String email = authentication.getName();
+
+        // 서비스 호출해서 내역 가져오기
+        List<PaymentDto> history = paymentService.getPaymentHistory(email);
+
+        // ApiResponse에 담아서 리턴 (제네릭 타입은 프로젝트 설정에 맞게 Object 등으로 변경 가능)
+        ApiResponse<List<PaymentDto>> response = new ApiResponse<>(true, "결제 내역 조회 완료", history, 0, 0);
         return ResponseEntity.ok(response);
     }
 }

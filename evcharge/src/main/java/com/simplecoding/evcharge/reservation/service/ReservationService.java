@@ -25,14 +25,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private final ReservationRepository repository;
+    private final ReservationRepository repository; // 📍 소문자 'repository'로 통일
     private final StationRepository stationRepository;
     private final MapStruct mapper;
-
-    // paymentService와 walletService는 나중에 결제/취소 로직 확장 시 활용하세요.
     private final PaymentService paymentService;
     private final WalletService walletService;
-
 
     public Page<ReservationDto> getReservationList(String email, String status, Pageable pageable) {
         return repository.findReservationList(email, status, pageable);
@@ -40,29 +37,40 @@ public class ReservationService {
 
     @Transactional
     public Reservation createReservation(String email, Long stationId, LocalDateTime startTime, LocalDateTime endTime) {
-        // [추가] 0. 예약 가능 시간 검증 (현재 시간 + 10분 여유 체크)
         if (startTime.isBefore(LocalDateTime.now().plusMinutes(10))) {
             throw new IllegalArgumentException("예약은 최소 시작 10분 전까지만 가능합니다.");
         }
-        // 1. 충전소 존재 확인
+
         Station station = stationRepository.findById(stationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소 ID입니다: " + stationId));
 
-        // 3. 중복 예약 체크
         String rDate = startTime.toLocalDate().toString();
         if (!repository.findOverlapping(stationId, startTime, endTime, rDate).isEmpty()) {
             throw new IllegalStateException("선택하신 시간대에 이미 다른 예약이 존재하여 예약이 불가능합니다.");
         }
 
-        // 5. 예약 저장
+        FeeResult estimate = calculateEstimatedFee(stationId, startTime, endTime);
+        int totalFee = estimate.getBaseFee();
+
+        walletService.useBalance(email, (long) totalFee);
+
+        // 📍 엔티티 빌더에서 stationName을 빼고 station 객체만 전달합니다.
         Reservation reservation = Reservation.builder()
                 .email(email)
                 .station(station)
                 .startTime(startTime)
                 .endTime(endTime)
                 .rDate(rDate)
-                .status("RESERVED") // 📍 문자열 상태값 적용 완료!
+                .status("RESERVED")
                 .build();
+
+        // 2. 기존 로직: 예약을 DB에 저장
+        Reservation savedReservation = repository.save(reservation);
+
+        // 💡 3. 신규 로직: 포인트 차감이 성공하고 예약이 저장된 직후, 결제 내역(영수증)을 남깁니다!
+        if (totalFee > 0) {
+            paymentService.saveUsageHistory(email, (long) totalFee, savedReservation);
+        }
 
         return repository.save(reservation);
     }
@@ -70,12 +78,15 @@ public class ReservationService {
     public ReservationDto getReservation(Long id) {
         Reservation reservation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
-        return mapper.toDto(reservation);
+
+        ReservationDto dto = mapper.toDto(reservation);
+        // 💡 매퍼가 채워주지 못하는 조인 정보(이름)를 수동으로 보충합니다.
+        if (reservation.getStation() != null) {
+            dto.setStationName(reservation.getStation().getStationName());
+        }
+        return dto;
     }
 
-    /**
-     * 날짜 및 시간 별 예약 확인
-     */
     public List<String> getReservedTimeSlots(Long chargerId, LocalDate date) {
         String rDate = date.toString();
         List<Reservation> reservations = repository.findReservedSlotsByDate(chargerId, rDate);
@@ -86,7 +97,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    @jakarta.transaction.Transactional
+    @Transactional
     public void cancelReservation(Long reservationId) {
         Reservation reservation = repository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
@@ -97,15 +108,12 @@ public class ReservationService {
         reservation.setStatus("CANCELLED");
     }
 
-    // 📍 1. 충전 시작 로직 수정 완료
-    @jakarta.transaction.Transactional
+    @Transactional
     public void startCharging(Long reservationId) {
         Reservation reservation = repository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
 
         LocalDateTime now = LocalDateTime.now();
-
-        // 1. 시작 가능 조건 (-10분 허용)
         if (reservation.getStartTime().minusMinutes(10).isAfter(now)) {
             throw new RuntimeException("아직 시작 시간이 아닙니다.");
         }
@@ -114,42 +122,41 @@ public class ReservationService {
             throw new RuntimeException("예약 대기 상태에서만 충전을 시작할 수 있습니다.");
         }
 
-        // 2. 상태 변경 (CHARGING으로 정상 변경)
         reservation.setStatus("CHARGING");
     }
 
-    // 📍 2. 충전 종료 로직 수정 완료
-    @jakarta.transaction.Transactional
+    @Transactional
     public void endCharging(Long reservationId) {
-        Reservation reservation = repository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("예약 없음"));
+        Reservation res = repository.findById(reservationId).orElseThrow();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime plannedEnd = res.getEndTime();
 
-        // 충전 중일 때만 종료 가능하도록 검증
-        if (!"CHARGING".equals(reservation.getStatus())) {
-            throw new RuntimeException("충전 중인 상태에서만 종료할 수 있습니다.");
+        long diffMinutes = java.time.Duration.between(plannedEnd, now).toMinutes();
+
+        if (diffMinutes < 0) {
+            long unusedMinutes = Math.abs(diffMinutes);
+            long refundAmount = unusedMinutes * 100;
+            walletService.chargeReserveFund(res.getEmail(), refundAmount);
+        } else if (diffMinutes > 0) {
+            long penaltyAmount = diffMinutes * 150;
+            walletService.spendReserveFund(res.getEmail(), penaltyAmount);
         }
 
-        // 상태를 충전 완료(COMPLETED)로 변경
-        reservation.setStatus("COMPLETED");
+        res.setStatus("COMPLETED");
     }
 
-    // 📍 3. 요금 계산 로직 수정 완료 (에러 없는 DB 타입 조회 방식으로 복구)
     public Object calculateFee(Long reservationId) {
         Reservation reservation = repository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
 
         LocalDateTime start = reservation.getStartTime();
-        LocalDateTime end = reservation.getEndTime() != null
-                ? reservation.getEndTime()
-                : LocalDateTime.now();
+        LocalDateTime end = reservation.getEndTime() != null ? reservation.getEndTime() : LocalDateTime.now();
 
         long minutes = java.time.Duration.between(start, end).toMinutes();
-
-        // 충전소 정보에서 타입 가져오기
         String chargerType = reservation.getStation().getChargerType();
 
-        int pricePer10Min = 1000; // 기본 단가
-        long fullChargeMinutes = 60; // 기본 허용 시간
+        int pricePer10Min = 1000;
+        long fullChargeMinutes = 60;
 
         if (chargerType != null) {
             String typeStr = chargerType.toUpperCase().replace(" ", "");
@@ -165,41 +172,105 @@ public class ReservationService {
             }
         }
 
-        // 분당 요금
         double pricePerMinute = pricePer10Min / 10.0;
-
-        // 기본 요금 (완충 시간까지만)
         long normalMinutes = Math.min(minutes, fullChargeMinutes);
         int baseFee = (int) Math.round(normalMinutes * pricePerMinute);
-
-        // 초과 요금 (무조건 1분당 100원)
-        int overstayFee = 0;
-        if (minutes > fullChargeMinutes) {
-            long overMinutes = minutes - fullChargeMinutes;
-            overstayFee = (int) (overMinutes * 100);
-        }
+        int overstayFee = (minutes > fullChargeMinutes) ? (int) ((minutes - fullChargeMinutes) * 100) : 0;
 
         return new FeeResult(minutes, baseFee, overstayFee);
     }
 
-    // 📍 4. 결제 로직 수정 완료
-    @jakarta.transaction.Transactional
+    @Transactional
     public void pay(Long reservationId, Object paymentRequest) {
         Reservation reservation = repository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("예약 없음"));
 
         String currentStatus = reservation.getStatus();
-
-        if ("CANCELLED".equals(currentStatus)) {
-            throw new RuntimeException("취소된 예약은 결제 불가");
-        }
-
-        // 상태가 'COMPLETED'도 아니고 'OVERSTAY'도 아니면 에러!
+        if ("CANCELLED".equals(currentStatus)) throw new RuntimeException("취소된 예약은 결제 불가");
         if (!"COMPLETED".equals(currentStatus) && !"OVERSTAY".equals(currentStatus)) {
             throw new RuntimeException("결제 가능한 상태가 아닙니다.");
         }
-
-        // 결제 성공 가정
         reservation.setStatus("COMPLETED");
+    }
+
+    public FeeResult calculateEstimatedFee(Long stationId, LocalDateTime start, LocalDateTime end) {
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전소입니다."));
+
+        long minutes = java.time.Duration.between(start, end).toMinutes();
+        String chargerType = station.getChargerType();
+
+        int pricePer10Min = 1000;
+        long fullChargeMinutes = 60;
+
+        if (chargerType != null) {
+            String typeStr = chargerType.toUpperCase().replace(" ", "");
+            if (typeStr.contains("100KW") || typeStr.contains("급속")) {
+                pricePer10Min = 2000;
+                fullChargeMinutes = 40;
+            } else if (typeStr.contains("50KW")) {
+                pricePer10Min = 1500;
+                fullChargeMinutes = 70;
+            } else if (typeStr.contains("완속") || typeStr.contains("7KW")) {
+                pricePer10Min = 500;
+                fullChargeMinutes = 240;
+            }
+        }
+
+        double pricePerMinute = pricePer10Min / 10.0;
+        int baseFee = (int) Math.round(Math.min(minutes, fullChargeMinutes) * pricePerMinute);
+
+        return new FeeResult(minutes, baseFee, 0);
+    }
+
+    @Transactional
+    public void cancelReservations() {
+        LocalDateTime limitTime = LocalDateTime.now().minusMinutes(10);
+        List<Reservation> expiredList = repository.findExpiredReservations(limitTime);
+        for (Reservation res : expiredList) {
+            res.setStatus("CANCELLED");
+        }
+    }
+
+    public ReservationDto findCurrentReservationDto(String email) {
+        List<Reservation> list = repository.findCurrentReservationByEmail(email);
+        if (list.isEmpty()) return null;
+
+        Reservation res = list.get(0);
+        ReservationDto dto = mapper.toDto(res);
+        // 💡 조인된 충전소 이름을 DTO에 직접 넣어줍니다.
+        if (res.getStation() != null) {
+            dto.setStationName(res.getStation().getStationName());
+            dto.setStationId(res.getStation().getStationId());
+        }
+        return dto;
+    }
+
+    public List<ReservationDto> getReservationHistory(String email) {
+        // 📍 'repository' (소문자) 호출 및 JOIN FETCH 활용
+        List<Reservation> reservations = repository.findMyReservations(email);
+
+        return reservations.stream()
+                .map(res -> {
+                    ReservationDto dto = ReservationDto.builder()
+                            .reservationId(res.getReservationId())
+                            .email(res.getEmail())
+                            .startTime(res.getStartTime())
+                            .endTime(res.getEndTime())
+                            .status(res.getStatus())
+                            .rDate(res.getRDate())
+                            .stationName(res.getStation() != null ? res.getStation().getStationName() : "정보 없음")
+                            .build();
+
+                    // 💡 핵심: 조인된 Station 엔티티에서 정보를 안전하게 꺼내옵니다.
+                    if (res.getStation() != null) {
+                        dto.setStationName(res.getStation().getStationName());
+                        dto.setAddress(res.getStation().getAddress());
+                        dto.setStationId(res.getStation().getStationId());
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }
