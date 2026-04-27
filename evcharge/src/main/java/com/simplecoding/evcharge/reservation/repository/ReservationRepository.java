@@ -3,9 +3,11 @@ package com.simplecoding.evcharge.reservation.repository;
 import com.simplecoding.evcharge.reservation.dto.ReservationDto;
 import com.simplecoding.evcharge.reservation.entity.Reservation;
 import com.simplecoding.evcharge.reservation.entity.Status;
+import org.mapstruct.Mapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -101,4 +103,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             "AND r.status = 'RESERVED'")
     List<Reservation> findReservedSlotsByDate(@Param("chargerId") Long chargerId,
                                               @Param("rDate") String rDate);
-}
+
+    List<Reservation> findByEmailAndStatusIn(String email, List<String> statuses);
+    }
