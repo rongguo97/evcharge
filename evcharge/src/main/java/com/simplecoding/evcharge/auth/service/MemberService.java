@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -79,18 +81,23 @@ public class MemberService {
      * 이메일로 회원 정보를 조회하여 DTO로 반환합니다.
      */
     public MemberDto findByEmail(String email) {
-        // 1. DB에서 해당 이메일의 엔티티를 찾습니다.
-        // 없으면 에러를 발생시킵니다 (Optional 처리)
-
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + email));
 
-        // 조회된 member 엔티티를 DTO로 변환해서 반환
+        // DB의 INSERT_TIME을 "yyyy.MM.dd" 형식의 문자열로 변환
+        String formattedDate = "";
+        if (member.getInsertTime() != null) {
+            formattedDate = member.getInsertTime().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        }
+
+        // 요청하신 컬럼들로만 구성된 빌더
         return MemberDto.builder()
                 .email(member.getEmail())
                 .memberName(member.getMemberName())
-                .role(member.getRole())
                 .carNumber(member.getCarNumber())
+                .phoneNumber(member.getPhoneNumber())
+                .role(member.getRole())
+                .insertTime(formattedDate) // 포맷팅된 날짜 삽입
                 .build();
     }
 }

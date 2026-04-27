@@ -4,6 +4,8 @@ import com.simplecoding.evcharge.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity                           // jpa 에게 이 클래스가 엔티티임을 알려줌
 @Table(name = "TB_MEMBER")        // 연결할 db 테이블 작성
 @Getter                           // 롬북 플러그인
@@ -41,4 +43,7 @@ public class Member extends BaseTimeEntity {
 
     @Column(name = "IS_DELETED")
     private String isDeleted = "N";
+
+    @Column(name = "INSERT_TIME")
+    private LocalDateTime insertTime;
 }
