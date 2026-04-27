@@ -116,6 +116,6 @@ public class MemberService {
         member.setCarNumber(memberDto.getCarNumber());
         member.setPhoneNumber(memberDto.getPhoneNumber());
 
-       
+
     }
 }
