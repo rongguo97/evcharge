@@ -32,8 +32,8 @@ public class Member extends BaseTimeEntity {
     private String role = "ROLE_USER";
 
     //  ERD에 맞춰 GRADE 필드 추가
-    @Column(name = "GRADE")
-    private String grade;
+    @Column(name = "GRADE", nullable = false)
+    private String grade = "BRONZE";
 
     @Column(name = "CAR_NUMBER")
     private String carNumber;
@@ -43,6 +43,8 @@ public class Member extends BaseTimeEntity {
 
     @Column(name = "IS_DELETED")
     private String isDeleted = "N";
+
+
 
     // (참고) BaseTimeEntity를 상속받고 있다면 insertTime이 중복될 수 있음.
     // 만약 DB의 INSERT_TIME 컬럼과 명시적으로 연결해야 한다면 아래처럼 두도록함

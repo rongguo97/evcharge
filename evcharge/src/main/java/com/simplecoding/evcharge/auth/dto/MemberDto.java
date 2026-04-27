@@ -17,6 +17,8 @@ public class MemberDto {
     private String memberName;
     private String carNumber;   // 차량 번호 추가
     private String phoneNumber; // 전화번호 추가
+    private String grade = "BRONZE"; // 📍 초기값을 직접 지정
+    private String isDeleted = "N";  // 📍 탈퇴 여부도 보통 기본값 N
     private String role = "ROLE_USER";
     private String insertTime;   // 최초 가입일로 사용
     private String accessToken;
