@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @Service
@@ -79,18 +81,41 @@ public class MemberService {
      * 이메일로 회원 정보를 조회하여 DTO로 반환합니다.
      */
     public MemberDto findByEmail(String email) {
-        // 1. DB에서 해당 이메일의 엔티티를 찾습니다.
-        // 없으면 에러를 발생시킵니다 (Optional 처리)
-
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + email));
 
-        // 조회된 member 엔티티를 DTO로 변환해서 반환
+        // DB의 INSERT_TIME을 "yyyy.MM.dd" 형식의 문자열로 변환
+        String formattedDate = "";
+        if (member.getInsertTime() != null) {
+            formattedDate = member.getInsertTime().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        }
+
+        // 요청하신 컬럼들로만 구성된 빌더
         return MemberDto.builder()
                 .email(member.getEmail())
                 .memberName(member.getMemberName())
-                .role(member.getRole())
                 .carNumber(member.getCarNumber())
+                .phoneNumber(member.getPhoneNumber())
+                .role(member.getRole())
+                .insertTime(formattedDate) // 포맷팅된 날짜 삽입
                 .build();
+    }
+    @Transactional
+    public void updateMember(MemberDto memberDto) {
+        // 1. 수정할 기존 회원 정보 조회
+        Member member = memberRepository.findByEmail(memberDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + memberDto.getEmail()));
+
+        // 2. 비밀번호 변경 처리 (새 비밀번호가 입력된 경우에만 해싱하여 업데이트)
+        if (memberDto.getPassword() != null && !memberDto.getPassword().isEmpty()) {
+            member.setPassword(encoder.encode(memberDto.getPassword()));
+        }
+
+        // 3. 나머지 정보 업데이트 (필요한 컬럼만 선별)
+        member.setMemberName(memberDto.getMemberName());
+        member.setCarNumber(memberDto.getCarNumber());
+        member.setPhoneNumber(memberDto.getPhoneNumber());
+
+
     }
 }
