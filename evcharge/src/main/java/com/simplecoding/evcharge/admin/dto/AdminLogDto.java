@@ -17,7 +17,9 @@ public class AdminLogDto {
         private String ipAddress;
     }
 
-    @Getter @Setter @NoArgsConstructor @AllArgsConstructor
+    // 📍 여기에 @Builder를 추가해야 서비스에서 .builder()를 사용가능.
+    @Getter @Setter @Builder
+    @NoArgsConstructor @AllArgsConstructor
     public static class Request {
         private String adminEmail;
         private String action;

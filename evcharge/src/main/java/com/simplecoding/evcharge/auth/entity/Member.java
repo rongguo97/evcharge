@@ -6,18 +6,18 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity                           // jpa 에게 이 클래스가 엔티티임을 알려줌
-@Table(name = "TB_MEMBER")        // 연결할 db 테이블 작성
-@Getter                           // 롬북 플러그인
+@Entity
+@Table(name = "TB_MEMBER")
+@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(of = "email", callSuper = false)
 public class Member extends BaseTimeEntity {
-    //    @Id : jakarta ~ 폴더 선택
+
     @Id
-    @Column(name = "EMAIL") // 컬럼명 명시
+    @Column(name = "EMAIL")
     private String email;
 
     @Column(name = "PASSWORD", nullable = false)
@@ -25,25 +25,27 @@ public class Member extends BaseTimeEntity {
 
     private String memberCode;
 
-    // 1. DB에는 MEMBER_NAME으로 되어 있으므로 매핑
     @Column(name = "MEMBER_NAME")
     private String memberName;
 
-    // 2. DB에는 ROLE로 되어 있으므로 매핑
     @Column(name = "ROLE")
     private String role = "ROLE_USER";
 
-    // 3. 전기차 서비스라면 차량 번호 추가
+    //  ERD에 맞춰 GRADE 필드 추가
+    @Column(name = "GRADE")
+    private String grade;
+
     @Column(name = "CAR_NUMBER")
     private String carNumber;
 
-    // (선택) 전화번호나 삭제 여부도 ERD에 있으므로 추가
     @Column(name = "PHONE_NUMBER")
     private String phoneNumber;
 
     @Column(name = "IS_DELETED")
     private String isDeleted = "N";
 
-    @Column(name = "INSERT_TIME")
+    // (참고) BaseTimeEntity를 상속받고 있다면 insertTime이 중복될 수 있음.
+    // 만약 DB의 INSERT_TIME 컬럼과 명시적으로 연결해야 한다면 아래처럼 두도록함
+    @Column(name = "INSERT_TIME", updatable = false)
     private LocalDateTime insertTime;
 }
