@@ -100,4 +100,22 @@ public class MemberService {
                 .insertTime(formattedDate) // 포맷팅된 날짜 삽입
                 .build();
     }
+    @Transactional
+    public void updateMember(MemberDto memberDto) {
+        // 1. 수정할 기존 회원 정보 조회
+        Member member = memberRepository.findByEmail(memberDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 없습니다. email=" + memberDto.getEmail()));
+
+        // 2. 비밀번호 변경 처리 (새 비밀번호가 입력된 경우에만 해싱하여 업데이트)
+        if (memberDto.getPassword() != null && !memberDto.getPassword().isEmpty()) {
+            member.setPassword(encoder.encode(memberDto.getPassword()));
+        }
+
+        // 3. 나머지 정보 업데이트 (필요한 컬럼만 선별)
+        member.setMemberName(memberDto.getMemberName());
+        member.setCarNumber(memberDto.getCarNumber());
+        member.setPhoneNumber(memberDto.getPhoneNumber());
+
+       
+    }
 }
