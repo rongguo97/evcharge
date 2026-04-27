@@ -31,6 +31,7 @@ public class AdminLog {
     // 상세 내용을 담을 수 있는 필드 추가 (추천)
     // 예: "등급 변경: GOLD -> VIP"
     @Column(name = "DESCRIPTION", length = 500)
+    @Transient
     private String description;
 
     @Column(name = "TARGET_ID", length = 255) // 길이를 조금 더 여유 있게 조정
