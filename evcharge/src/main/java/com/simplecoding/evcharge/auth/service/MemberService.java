@@ -88,7 +88,9 @@ public class MemberService {
         // 조회된 member 엔티티를 DTO로 변환해서 반환
         return MemberDto.builder()
                 .email(member.getEmail())
-                .memberName(member.getMemberName()) // 드디어 이름이 담깁니다!
+                .memberName(member.getMemberName())
+                .role(member.getRole())
+                .carNumber(member.getCarNumber())
                 .build();
     }
 }

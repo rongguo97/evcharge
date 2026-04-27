@@ -34,6 +34,8 @@ public class ReservationDto {
 
     private String status; // 기본값 "RESERVED"
 
+
+
     // 4. [선택/추천] 화면에 보여줄 때 필요한 추가 정보 (Station 정보 등)
     // 리액트 등 프론트에서 충전소 이름을 바로 보여주고 싶을 때 유용합니다.
     private String stationName;
