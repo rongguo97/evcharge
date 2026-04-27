@@ -107,6 +107,15 @@
                 log.error("사용자 정보 없음: {}", e.getMessage());
                 return ResponseEntity.status(404).build(); // 404 Not Found
             }
+        }
+        @PutMapping("/member/update")
+        public ResponseEntity<Void> updateMember(@RequestBody MemberDto memberDto, Authentication authentication) {
+            // 보안 확인: 현재 로그인한 유저와 수정하려는 유저가 같은지 확인
+            if (!authentication.getName().equals(memberDto.getEmail())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
 
+            service.updateMember(memberDto);
+            return ResponseEntity.ok().build();
         }
     }
