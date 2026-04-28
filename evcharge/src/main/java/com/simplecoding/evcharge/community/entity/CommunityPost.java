@@ -8,10 +8,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "COMMUNITY_POST")
+@Table(name = "TB_COMMUNITY")
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
-@Builder
+@NoArgsConstructor // JPA를 위한 기본 생성자
+@AllArgsConstructor // Builder를 위한 모든 필드 생성자 (빨간줄 해결 핵심)
+@Builder // 빌더 패턴 적용
 public class CommunityPost {
 
     @Id
@@ -31,11 +32,11 @@ public class CommunityPost {
     private String content;
 
     @Builder.Default
-    @Column(name = "IS_NOTICE", length = 1)
-    private String isNotice = "N";
+    @Column(name = "IS_NOTICE", columnDefinition = "NUMBER(1,0)")
+    private Integer isNotice = 0;
 
     @Builder.Default
-    @Column(name = "IS_DELETED", length = 1)
+    @Column(name = "IS_DELETED", columnDefinition = "CHAR(1)")
     private String isDeleted = "N";
 
     @CreationTimestamp

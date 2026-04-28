@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() //테스트용 임시 허용
                 .requestMatchers("/api/auth/**","/station/**").permitAll()
                 .requestMatchers("/station/**", "/api/station/**", "/api/reservation/**").permitAll() //테스트용 임시허용
+                .requestMatchers("/api/community/posts/**","/{cUuid}/update").permitAll()
                 .requestMatchers("/api/auth/** /station/**\", \"/reservation/**\", \"/api/reservations/**", "/api/api/**").permitAll()                    // /api/auth/** 주소는 모두 허용(로그인 없이) // ← 이 줄 추가 lss 260427
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")            // /api/admin/** 주소는 관리자만 허용합니다.
                 .requestMatchers("/api/download/**", "/images/**", "/css/**","/js/**", "/favicon.ico").permitAll() // 이미지등은 모두 허용

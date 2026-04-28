@@ -12,7 +12,7 @@ public class CommunityPostDto {
         private String email;
         private String title;
         private String content;
-        private String isNotice;
+        private Integer isNotice;
         private String isDeleted;
         private LocalDateTime insertTime;
         private LocalDateTime updateTime;
@@ -23,13 +23,13 @@ public class CommunityPostDto {
         private String email;
         private String title;
         private String content;
-        private String isNotice;
+        private Integer isNotice;
     }
 
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor
     public static class UpdateRequest {
         private String title;
         private String content;
-        private String isNotice;
+        private Integer isNotice;
     }
 }
