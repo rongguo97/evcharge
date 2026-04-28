@@ -49,4 +49,6 @@ public class AdminLog {
 
     @Column(name = "IP_ADDRESS", length = 45)
     private String ipAddress;
+
+
 }

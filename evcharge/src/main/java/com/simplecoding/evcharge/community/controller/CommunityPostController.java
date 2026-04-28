@@ -11,8 +11,9 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/community/posts")
+@RequestMapping("/api/community")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173") // ✅ 프론트엔드 주소 허용 (필수!!)
 public class CommunityPostController {
 
     private final CommunityPostService communityPostService;
@@ -36,26 +37,29 @@ public class CommunityPostController {
         return ResponseEntity.ok(communityPostService.getNoticePosts());
     }
 
-    // 단건 조회
-    @GetMapping("/{id}")
+    // 게시글 단건 조회 (cUuid 기반)
+    @GetMapping("/{cUuid}")
     public ResponseEntity<CommunityPostDto.Response> getPost(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(communityPostService.getPost(id));
+            @PathVariable("cUuid") Long cUuid) { // 명시적으로 cUuid를 받음
+        return ResponseEntity.ok(communityPostService.getPost(cUuid));
     }
 
     // 게시글 수정
-    @PutMapping("/{id}")
+    @PutMapping("/{cUuid}/update")
     public ResponseEntity<CommunityPostDto.Response> updatePost(
-            @PathVariable Long id,
+            @PathVariable("cUuid") Long id, // 경로의 {cUuid}를 'id'라는 변수에 담음
             @RequestBody CommunityPostDto.UpdateRequest request) {
-        return ResponseEntity.ok(communityPostService.updatePost(id, request));
+
+        // 서비스의 updatePost(Long id, ...)와 타입을 일치시킴
+        CommunityPostDto.Response result = communityPostService.updatePost(id, request);
+
+        return ResponseEntity.ok(result);
     }
 
-    // 게시글 삭제 (소프트 삭제)
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+    @DeleteMapping("/{cUuid}/delete")
+    public ResponseEntity<Void> deletePost(@PathVariable("cUuid") Long id) { // "cUuid"를 id 변수로 매핑
         communityPostService.deletePost(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build(); // 204 No Content 반환
     }
 
     // 키워드 검색

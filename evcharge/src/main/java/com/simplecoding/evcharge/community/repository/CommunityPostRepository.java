@@ -10,7 +10,7 @@ import java.util.List;
 public interface CommunityPostRepository extends JpaRepository<CommunityPost, Long> {
 
     List<CommunityPost> findByIsDeletedOrderByInsertTimeDesc(String isDeleted);
-    List<CommunityPost> findByIsNoticeAndIsDeletedOrderByInsertTimeDesc(String isNotice, String isDeleted);
+    List<CommunityPost> findByIsNoticeAndIsDeletedOrderByInsertTimeDesc(Integer isNotice, String isDeleted);
     List<CommunityPost> findByEmailAndIsDeleted(String email, String isDeleted);
     List<CommunityPost> findByTitleContainingIgnoreCaseAndIsDeleted(String keyword, String isDeleted);
 }
