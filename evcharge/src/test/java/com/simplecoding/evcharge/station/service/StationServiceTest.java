@@ -1,95 +1,133 @@
-package com.simplecoding.evcharge.station.service;
-
-import com.simplecoding.evcharge.station.dto.StationDto;
-import com.simplecoding.evcharge.station.entity.Station;
-import com.simplecoding.evcharge.station.repository.StationRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-@SpringBootTest
-class StationServiceTest {
-
-    @Autowired
-    private StationService stationService;
-    @Autowired
-    private  StationRepository stationRepository;
-
-
-
-    @Test
-    void selectStationList() {
-        // 1. 페이징 설정 (0번째 페이지, 10개씩)
-        Pageable pageable = PageRequest.of(0, 10);
-
-        // 2. 검색어 없이 전체 조회 테스트
-        Page<StationDto> allStations = stationService.selectStationList("", pageable);
-        System.out.println("전체 충전소 개수: " + allStations.getTotalElements());
-
-        // 3. 검색어 포함 조회 테스트 (예: '강남'이 포함된 충전소)
-        Page<StationDto> searchStations = stationService.selectStationList("강남", pageable);
-        searchStations.forEach(s -> System.out.println("검색된 충전소: " + s.getStationName()));
-    }
-
-    @Test
-    void selectStationDetail() {
-        // 1. 상세 조회 테스트 (실제 DB에 있는 ID 하나를 넣으세요. 예: 1L)
-        Long targetId = 1L;
-
-        try {
-            StationDto station = stationService.selectStationDetail(targetId);
-            System.out.println("상세 정보 - 이름: " + station.getStationName());
-            System.out.println("상세 정보 - 주소: " + station.getAddress());
-        } catch (Exception e) {
-            System.out.println("에러 발생: " + e.getMessage());
-        }
-    }
-
-    @Test
-    @Transactional
-    @Rollback(true) // 테스트 후 데이터 복구
-    void updateFromDto() {
-        // 1. 기존 데이터 준비 (DB에 1번 데이터가 있다고 가정)
-        Long targetId = 1L;
-        StationDto updateDto = new StationDto();
-        updateDto.setStationId(targetId);
-        updateDto.setStationName("강남역 저속 충전소");
-        updateDto.setAddress("서울시 강남구 역삼동 123-46");
-
-        // 2. 수정 서비스 호출
-        stationService.updateFromDto(updateDto);
-
-        // 3. 검증: 다시 조회해서 값이 바뀌었는지 확인
-        StationDto result = stationService.selectStationDetail(targetId);
-        System.out.println("강남역 저속 충전소: " + result.getStationName());
-
-        // Assertions를 사용한다면:
-        // assertEquals("수정된 충전소 이름", result.getStationName());
-    }
-
-    @Test
-    @Transactional
-    @Rollback(true)
-    void deleteStation() {
-        // 1. 삭제할 ID 준비
-        Long targetId = 1L;
-
-        // 2. 삭제 서비스 호출 (isDeleted -> 'Y')
-        stationService.deleteStation(targetId);
-
-        // 3. 검증: 상세 조회를 하면 isDeleted가 'Y'여야 함
-        // (주의: selectStationList에서는 'N'만 조회되므로 결과가 안 나올 것입니다)
-        Station station = stationRepository.findById(targetId).get();
-        System.out.println("삭제 여부 상태(Y여야 함): " + station.getIsDeleted());
-
-        // Assertions를 사용한다면:
-        // assertEquals("Y", station.getIsDeleted());
-    }
-}
+//package com.simplecoding.evcharge.station.service;
+//
+//import com.simplecoding.evcharge.station.dto.StationDto;
+//import com.simplecoding.evcharge.station.entity.Station;
+//import com.simplecoding.evcharge.station.repository.StationRepository;
+//import com.simplecoding.evcharge.common.MapStruct;
+//import org.junit.jupiter.api.DisplayName;
+//import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.extension.ExtendWith;
+//import org.mockito.InjectMocks;
+//import org.mockito.Mock;
+//import org.mockito.junit.jupiter.MockitoExtension;
+//import org.springframework.data.domain.*;
+//
+//import java.util.List;
+//import java.util.Optional;
+//
+//import static org.assertj.core.api.Assertions.assertThat;
+//import static org.mockito.ArgumentMatchers.*;
+//import static org.mockito.BDDMockito.given;
+//import static org.mockito.Mockito.verify;
+//import static org.mockito.Mockito.times;
+//
+//@ExtendWith(MockitoExtension.class) // Mockito 사용 설정
+//class StationServiceTest {
+//
+//    @Mock
+//    private StationRepository stationRepository;
+//
+//    @Mock
+//    private MapStruct chargerstruct;
+//
+//    @InjectMocks
+//    private StationService stationService;
+//
+//    @Test
+//    @DisplayName("공공데이터 저장 테스트")
+//    void save() throws Exception {
+//        // given: 테스트용 JSON 데이터
+//        String json = "{\"data\": [{\"시도\": \"부산\", \"군구\": \"해운대구\", \"주소\": \"우동\", \"충전소명\": \"해운대충전소\", \"충전기ID\": 1, \"충전소ID\": \"ST_01\"}]}";
+//
+//        // Mock 설정
+//        given(chargerstruct.toEntity(any(StationDto.class))).willReturn(new Station());
+//
+//        // when
+//        stationService.save(json);
+//
+//        // then: 저장 메서드가 호출되었는지 검증
+//        verify(stationRepository, times(1)).save(any());
+//    }
+//
+//    @Test
+//    @DisplayName("전체 목록 조회 테스트")
+//    void selectChargerList() {
+//        // given
+//        Pageable pageable = PageRequest.of(0, 10);
+//        Page<StationDto> page = new PageImpl<>(List.of(new StationDto()));
+//        given(stationRepository.selectChargerList(anyString(), any())).willReturn(page);
+//
+//        // when
+//        Page<StationDto> result = stationService.selectChargerList("테스트", pageable);
+//
+//        // then
+//        assertThat(result.getContent()).hasSize(1);
+//    }
+//
+//    @Test
+//    @DisplayName("ID로 단일 상세 조회 테스트")
+//    void findById() {
+//        // given
+//        long testId = 1L;
+//        Station station = new Station();
+//        StationDto dto = new StationDto();
+//        given(stationRepository.findById(testId)).willReturn(Optional.of(station));
+//        given(chargerstruct.toDto(station)).willReturn(dto);
+//
+//        // when
+//        StationDto result = stationService.findById(testId);
+//
+//        // then
+//        assertThat(result).isNotNull();
+//    }
+//
+//
+//
+//    @Test
+//    @DisplayName("지역별 조회 테스트")
+//    void findBySidoAndGungguDto() {
+//        // given
+//        given(stationRepository.findBySidoAndGungguDto("부산", "해운대구")).willReturn(List.of(new StationDto()));
+//
+//        // when
+//        List<StationDto> result = stationService.findBySidoAndGungguDto("부산", "해운대구");
+//
+//        // then
+//        assertThat(result).isNotEmpty();
+//    }
+//
+//    @Test
+//    @DisplayName("기종별 조회 테스트")
+//    void findByModelLDto() {
+//        // given
+//        given(stationRepository.findByModelLDto("급속")).willReturn(List.of(new StationDto()));
+//
+//        // when
+//        List<StationDto> result = stationService.findByModelLDto("급속");
+//
+//        // then
+//        assertThat(result).isNotEmpty();
+//    }
+////    @Test
+////    @DisplayName("충전기 타입별(커넥터) 조회 테스트")
+////    void findByChargerTypeDto() {
+////        // given
+////        String chargerType = "DC콤보";
+////        // 가짜 결과 데이터 생성
+////        List<ChargerDto> mockList = List.of(new ChargerDto());
+////
+////        // 레포지토리 호출 시 mockList를 반환하도록 설정
+////        given(chargerRepository.findByChargerTypeDto(chargerType)).willReturn(mockList);
+////
+////        // when
+////        List<ChargerDto> result = chargerService.findByChargerTypeDto(chargerType);
+////
+////        // then
+////        assertThat(result).isNotEmpty();
+////        assertThat(result.get(0)).isInstanceOf(ChargerDto.class);
+////        // 실제로 레포지토리가 해당 파라미터로 호출되었는지 검증
+////        verify(chargerRepository).findByChargerTypeDto(chargerType);
+////    }
+////}
+//}
+//

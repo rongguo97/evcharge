@@ -1,97 +1,85 @@
 package com.simplecoding.evcharge.station.controller;
 
 import com.simplecoding.evcharge.common.ApiResponse;
-import com.simplecoding.evcharge.common.CommonUtil;
 import com.simplecoding.evcharge.station.dto.StationDto;
-import com.simplecoding.evcharge.station.entity.Station;
 import com.simplecoding.evcharge.station.service.StationService;
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Station Controller", description = "전기차 충전소 조회 API")
+@Log4j2
 @RestController
-@RequestMapping("/api/station") // 요청하신 대로 /station 주소 사용
+@RequestMapping("/api")
 @RequiredArgsConstructor
-@Slf4j // 로그 확인용 (필요시)
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class StationController {
 
     private final StationService stationService;
-    private final CommonUtil util;
 
-    /**
-     * 1. 충전소 목록 조회 (검색어 + 페이징)
-     * 호출 예: /api/station?searchKeyword=강남&page=0&size=10
-     */
+    // 1. 키워드 전체 조회
+    @Operation(summary = "충전소 전체 조회", description = "키워드로 충전소 목록을 전체조회합니다.")
+    // StationController.java
+
     @GetMapping("/station")
-    public ResponseEntity<Object> selectStationList(
-            @RequestParam(required = false) String searchKeyword,
-            @PageableDefault(page = 0, size = 3) Pageable pageable) {
-        // 1. 서비스 호출 (결과는 이미 Page<StationDto>)
-        Page<StationDto> stations = stationService.selectStationList(searchKeyword, pageable);
+    public ResponseEntity<ApiResponse<List<StationDto>>> selectStationList(
+            @Parameter(description = "검색 키워드") @RequestParam(defaultValue = "") String searchKeyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String chargerType,
+            @RequestParam(required = false) String chargerMethod,
+            @PageableDefault(size = 100000)  Pageable pageable) {
 
-        // 2. ApiResponse 규격에 맞춰 응답 생성
-        // success, message, data, currentPage, totalElements 순서
-        ApiResponse<Page<StationDto>> response = new ApiResponse<>(
-                true,
-                "조회 성공",
-                stations,
-                stations.getNumber(),
-                stations.getTotalElements()
+        // 📍 수정된 부분: 파라미터들을 모두 서비스로 넘겨줘야 합니다.
+        Page<StationDto> page = stationService.selectStationList(
+                searchKeyword,
+                status,
+                chargerType,
+                chargerMethod,
+                pageable
         );
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        ApiResponse<List<StationDto>> response = new ApiResponse<>(
+                true, "조회 성공", page.getContent(), page.getNumber(), page.getTotalElements()
+        );
+        return ResponseEntity.ok(response);
     }
 
+    // 2. 단일상세조회
+    @Operation(summary = "충전소 상세 조회", description = "충전소를 한 개씩 상세 조회합니다.")
+    @GetMapping("/station/{stationId}")
+    public ResponseEntity<ApiResponse<StationDto>> findById(
+            @Parameter(description = "충전소 ID") @PathVariable long stationId) {
 
+        StationDto dto = stationService.findById(stationId);
 
-//     충전소 하나 조회
-    @GetMapping("/{stationId}")
-    public ResponseEntity<ApiResponse<StationDto>> selectStationDetail(@PathVariable long stationId) {
-
-        // 1. 서비스 호출 (결과는 StationDto)
-        StationDto dto = stationService.selectStationDetail(stationId);
-
-        // 2. ApiResponse 담기 (단건 조회이므로 페이징 정보는 0, 0 혹은 제외 가능)
         ApiResponse<StationDto> response = new ApiResponse<>(true, "상세조회 성공", dto, 0, 0);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
     }
-//    타입 조회
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<StationDto>>> getStationsByType(@RequestParam("type") String cType) {
-        List<StationDto> list = stationService.selectStationListByType(cType);
 
-        // 목록 조회이므로 데이터 개수를 count에 넣어줍니다.
-        ApiResponse<List<StationDto>> response =
-                new ApiResponse<>(true, "타입별 충전소 조회 성공", list, list.size(), 1);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-    //    수정:@PutMapping사용
-    @PutMapping("/station/{stationId}")
-    public ResponseEntity<Void>update(@PathVariable long stationId,
-                                      @Valid @RequestBody StationDto stationDto,
-                                      BindingResult result){
-        util.checkBindingResult(result);  //유효성 위반하면 에러메세지가 표시됩니다.
-        stationDto.setStationId(stationId);          //기본키 저장
-        stationService.updateFromDto(stationDto); //수정
-//      ApiResponse<StationDto> response = new ApiResponse<>(true, "수정 성공", null, 0, 0);
-        return  ResponseEntity.ok().build(); //ok신호만 보냄
-    }
-    //    삭제
-    @DeleteMapping("/station/{stationId}")
-    public ResponseEntity<Void> delet(@PathVariable long stationId){
-        stationService.deleteStation(stationId);
-        // ApiResponse 규격에 맞춰 성공 메시지 전달
-//        ApiResponse<Void> response = new ApiResponse<>(true, "삭제 성공", null, 0, 0);
-        return  ResponseEntity.ok().build();
+    // 6. 내 위치에서 주변 조회
+    @Operation(summary = "내 주변 조회", description = "내 위치 반경 내 충전소를 거리순으로 조회합니다..")
+    @GetMapping("/station/nearby")
+    public ResponseEntity<ApiResponse<List<StationDto>>> selectStationListByLocation(
+            @RequestParam Double userLat,
+            @RequestParam Double userLng,
+            @RequestParam(defaultValue = "5.0") Double radius) {
+
+        List<StationDto> list = stationService.selectStationListByLocation(userLat, userLng, radius);
+
+        // 리스트 방식이므로 페이지 번호와 총 개수는 0으로 세팅하거나 리스트 사이즈를 넣어줌
+        ApiResponse<List<StationDto>> response = new ApiResponse<>(
+                true, "내 주변 조회 성공", list, 0, list.size()
+        );
+        return ResponseEntity.ok(response);
     }
 }

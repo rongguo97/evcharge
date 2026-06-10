@@ -14,19 +14,44 @@ import java.util.List;
 @Repository
 public interface StationRepository extends JpaRepository<Station, Long> {
 
-    // JPQL을 사용하여 조회 시점에 바로 DTO로 변환
-    @Query("""
-        SELECT new com.simplecoding.evcharge.station.dto.StationDto(
-            s.stationId, s.stationName, s.address, s.lat, s.lng, s.isDeleted
-        ) 
-        FROM Station s
-        WHERE s.stationName LIKE %:searchKeyword%
-        AND s.isDeleted = 'N'
-    """)
-    Page<StationDto> selectStationList(@Param("searchKeyword") String searchKeyword,
-                                       Pageable pageable);
+    @Query(value = "SELECT s FROM Station s " +
+            "WHERE (s.stationName LIKE %:searchKeyword% OR s.address LIKE %:searchKeyword%) " +
+            "AND (:status IS NULL OR :status = '' OR s.status = :status) " +
+            "AND (:chargerType IS NULL OR :chargerType = '' OR s.chargerType = :chargerType) " +
+            "AND (:chargerMethod IS NULL OR :chargerMethod = '' OR s.chargerMethod = :chargerMethod)")
+    Page<Station> selectStationList(
+            @Param("searchKeyword") String searchKeyword,
+            @Param("status") String status,
+            @Param("chargerType") String chargerType,
+            @Param("chargerMethod") String chargerMethod,
+            Pageable pageable);
 
-    @Query("SELECT DISTINCT s FROM Station s JOIN s.chargers c " +
-            "WHERE c.cType = :cType AND s.isDeleted = 'N'")
-    List<Station> findByChargerType(@Param("cType") String cType);
+
+//    내 위치에서 주변 조회
+    // StationRepository.java
+
+    @Query(value = "SELECT " +
+            "s.STATION_ID as stationId, " +
+            "s.STATION_NAME as stationName, " +
+            "s.ADDRESS as address, " +
+            "s.LAT as lat, " +
+            "s.LNG as lng, " +
+            "s.STATUS as status, " +
+            "s.CHARGER_TYPE as chargerType, " +
+            "s.CHARGER_METHOD as chargerMethod, " +
+            "(6371 * acos(cos(:userLat * 3.141592653589793 / 180) * cos(s.LAT * 3.141592653589793 / 180) " +
+            "* cos((s.LNG * 3.141592653589793 / 180) - (:userLng * 3.141592653589793 / 180)) " +
+            "+ sin(:userLat * 3.141592653589793 / 180) * sin(s.LAT * 3.141592653589793 / 180))) AS distance " +
+            "FROM TB_STATION s " +
+            "WHERE (6371 * acos(cos(:userLat * 3.141592653589793 / 180) * cos(s.LAT * 3.141592653589793 / 180) " +
+            "* cos((s.LNG * 3.141592653589793 / 180) - (:userLng * 3.141592653589793 / 180)) " +
+            "+ sin(:userLat * 3.141592653589793 / 180) * sin(s.LAT * 3.141592653589793 / 180))) <= :radius " +
+            "ORDER BY distance ASC",
+            nativeQuery = true)
+    List<StationDto> selectStationListByLocation(
+            @Param("userLat") Double userLat,
+            @Param("userLng") Double userLng,
+            @Param("radius") Double radius);
+//스케쥴러 update를 위해 충전소이름과 충전기ID로 기존 데이터를 조회
+    Station findByStationNameAndChargerId(String stationName, Long chargerId);
 }

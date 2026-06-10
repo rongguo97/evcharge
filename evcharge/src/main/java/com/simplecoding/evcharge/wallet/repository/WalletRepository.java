@@ -9,7 +9,8 @@ import java.util.Optional;
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
-    // 이 지갑의 주인(Email)을 기반으로 지갑을 찾는 기능 추가
-    // JPA가 메서드 이름을 분석해서 "SELECT * FROM TB_WALLET WHERE EMAIL = ?" 쿼리를 자동으로 생성.
-    Optional<Wallet> findByMemberEmail(String email);
+    // 엔티티 필드명이 email이므로 findByEmail만 있으면됨.
+    // JPA가 "SELECT * FROM TB_WALLET WHERE EMAIL = ?" 쿼리를 자동으로 생성합니다.
+    Optional<Wallet> findByEmail(String email);
+
 }
